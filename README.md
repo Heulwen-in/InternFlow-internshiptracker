@@ -25,4 +25,5 @@ A full-stack job and internship application management system for students and g
 
 ## Project Status
 
-Currently in Week 1: Planning and setup.
+Week 1: Planning and setup.
+Week 2: Implemented JWT-based authentication with protected API routes, password hashing, persistent login state, and React route protection.
