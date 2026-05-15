@@ -1,60 +1,87 @@
-.app {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 4rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+.auth-page,
+.dashboard {
+  min-height: 100vh;
+  padding: 2rem;
 }
 
-.app__header h1 {
-  font-size: 2.25rem;
-  letter-spacing: -0.02em;
+.auth-page {
+  display: grid;
+  place-items: center;
 }
 
-.app__tagline {
-  margin: 0.5rem 0 0;
-  color: #475569;
+.auth-card {
+  width: min(100%, 420px);
+  padding: 2rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: grid;
+  gap: 1rem;
 }
 
-.app__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 0.9rem;
-  border-radius: 999px;
-  background: #e2e8f0;
-  font-size: 0.95rem;
-  width: max-content;
+.auth-card p,
+.dashboard-header p {
+  color: #64748b;
+  margin: 0;
 }
 
-.app__status-dot {
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 50%;
-  background: #94a3b8;
+.auth-card label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
 }
 
-.app__status[data-status='OK'] {
-  background: #dcfce7;
-}
-.app__status[data-status='OK'] .app__status-dot {
-  background: #16a34a;
+.auth-card input {
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
 }
 
-.app__status[data-status='error'] {
+button {
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.alert {
+  padding: 0.75rem;
+  border-radius: 6px;
   background: #fee2e2;
-}
-.app__status[data-status='error'] .app__status-dot {
-  background: #dc2626;
+  color: #991b1b;
 }
 
-.app__next ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.25rem;
-  color: #334155;
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
 }
 
-.app__next li + li {
-  margin-top: 0.25rem;
+.dashboard-grid {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-grid article {
+  padding: 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.dashboard-grid span {
+  display: block;
+  color: #64748b;
+}
+
+.dashboard-grid strong {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 2rem;
 }
