@@ -39,3 +39,4 @@ erDiagram
         datetime createdAt
         datetime updatedAt
     }
+```
