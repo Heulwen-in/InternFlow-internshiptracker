@@ -4,6 +4,7 @@ import { AuthContext } from "./AuthContext";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
@@ -26,7 +27,10 @@ export const AuthProvider = ({ children }) => {
     const loadUser = async () => {
       const token = localStorage.getItem("token");
 
-      if (!token) return;
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const res = await api.get("/auth/me");
@@ -34,6 +38,8 @@ export const AuthProvider = ({ children }) => {
       } catch {
         localStorage.removeItem("token");
         setUser(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -41,7 +47,16 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
