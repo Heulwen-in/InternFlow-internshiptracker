@@ -26,7 +26,7 @@ function Dashboard() {
           <h1>InternFlow</h1>
           <p>Welcome, {user?.name}. Track your internship progress here.</p>
         </div>
-        <button type="button" onClick={logout}>
+        <button type="button" className="button-ghost" onClick={logout}>
           Logout
         </button>
       </header>
@@ -47,11 +47,11 @@ function Dashboard() {
       </section>
 
       <section className="dashboard-actions">
-        <Link className="button-link" to="/applications">
+        <Link className="button-link secondary" to="/applications">
           View Applications
         </Link>
         <Link className="button-link" to="/applications/new">
-          Add Application
+          + Add Application
         </Link>
       </section>
     </main>

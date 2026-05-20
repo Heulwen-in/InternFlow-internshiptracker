@@ -6,17 +6,21 @@ function Applications() {
   const [applications, setApplications] = useState([]);
   const [error, setError] = useState("");
 
-  const loadApplications = async () => {
-    try {
-      const res = await getApplications();
-      setApplications(res.data.applications);
-    } catch {
-      setError("Failed to load applications");
-    }
-  };
-
   useEffect(() => {
-    loadApplications();
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await getApplications();
+        if (!cancelled) setApplications(res.data.applications);
+      } catch {
+        if (!cancelled) setError("Failed to load applications");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleDelete = async (id) => {
@@ -56,14 +60,22 @@ function Applications() {
               <tr key={application.id}>
                 <td>{application.company?.name}</td>
                 <td>{application.roleTitle}</td>
-                <td>{application.status}</td>
+                <td>
+                  <span className="status" data-status={application.status}>
+                    {application.status}
+                  </span>
+                </td>
                 <td>
                   {application.deadline
                     ? new Date(application.deadline).toLocaleDateString()
                     : "No deadline"}
                 </td>
                 <td>
-                  <button type="button" onClick={() => handleDelete(application.id)}>
+                  <button
+                    type="button"
+                    className="button-danger"
+                    onClick={() => handleDelete(application.id)}
+                  >
                     Delete
                   </button>
                 </td>
