@@ -100,6 +100,9 @@ function Applications() {
 
   return (
     <main className="dashboard">
+      <Link to="/dashboard" className="back-link">
+        ← Back to dashboard
+      </Link>
       <header className="dashboard-header">
         <div>
           <h1>Applications</h1>
