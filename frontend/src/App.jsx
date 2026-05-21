@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import NewApplication from "./pages/NewApplication";
 import Register from "./pages/Register";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import EditApplication from "./pages/EditApplication";
 
 function App() {
   return (
@@ -37,6 +38,14 @@ function App() {
         element={
           <ProtectedRoute>
             <NewApplication />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/applications/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditApplication />
           </ProtectedRoute>
         }
       />
