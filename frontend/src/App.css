@@ -442,3 +442,112 @@ tbody tr:last-child td {
     padding: 0.7rem 0.8rem;
   }
 }
+.filters {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.filters input,
+.filters select,
+td select {
+  width: 100%;
+  padding: 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.table-actions a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.status-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.status-grid article {
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.status-grid span {
+  display: block;
+  color: #64748b;
+}
+
+.status-grid strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.5rem;
+}
+
+.compact-card {
+  padding: 1.25rem;
+}
+
+.compact-card h2 {
+  margin-bottom: 1rem;
+}
+
+.deadline-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.deadline-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.deadline-list li:last-child {
+  border-bottom: 0;
+}
+
+.muted {
+  color: #64748b;
+}
+
+.wide-form {
+  margin-top: 2rem;
+  width: min(100%, 720px);
+}
+
+@media (max-width: 900px) {
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .table-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .deadline-list li {
+    flex-direction: column;
+  }
+}
