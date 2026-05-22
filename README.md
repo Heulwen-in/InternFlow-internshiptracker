@@ -65,3 +65,4 @@ npm run build
 
 cd backend
 npx prisma validate
+```
