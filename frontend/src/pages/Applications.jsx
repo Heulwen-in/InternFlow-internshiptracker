@@ -89,6 +89,7 @@ function Applications() {
   };
 
   const handleStatusChange = async (application, status) => {
+    try {
     const res = await updateApplication(application.id, { status });
 
     setApplications((current) =>
@@ -96,6 +97,9 @@ function Applications() {
         item.id === application.id ? res.data.application : item
       )
     );
+  } catch {
+    setError("Failed to update status");
+  }
   };
 
   return (
