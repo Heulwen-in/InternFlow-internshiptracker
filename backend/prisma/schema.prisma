@@ -46,4 +46,15 @@ model Application {
 
   user    User    @relation(fields: [userId], references: [id])
   company Company @relation(fields: [companyId], references: [id])
+  statusHistory StatusHistory[]
+}
+
+model StatusHistory {
+  id            Int      @id @default(autoincrement())
+  applicationId Int
+  oldStatus     String?
+  newStatus     String
+  changedAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id])
 }
