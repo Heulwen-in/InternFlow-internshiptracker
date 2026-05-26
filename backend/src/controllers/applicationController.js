@@ -16,6 +16,7 @@ const getApplications = async (req, res) => {
 
     res.json({ applications });
   } catch (error) {
+    console.error("[applications.getApplications]", error);
     res.status(500).json({ message: "Failed to fetch applications" });
   }
 };
@@ -41,6 +42,7 @@ const getApplication = async (req, res) => {
 
     res.json({ application });
   } catch (error) {
+    console.error("[applications.getApplication]", error);
     res.status(500).json({ message: "Failed to fetch application" });
   }
 };
@@ -95,16 +97,17 @@ const createApplication = async (req, res) => {
           },
         },
       },
-      include: { 
+      include: {
         company: true,
         statusHistory: {
-          orderBy: { changeAt: "desc" }
+          orderBy: { changedAt: "desc" },
         },
-       },
+      },
     });
 
     res.status(201).json({ application });
   } catch (error) {
+    console.error("[applications.createApplication]", error);
     res.status(500).json({ message: "Failed to create application" });
   }
 };
@@ -185,6 +188,7 @@ const updateApplication = async (req, res) => {
 
     res.json({ application });
   } catch (error) {
+    console.error("[applications.updateApplication]", error);
     res.status(500).json({ message: "Failed to update application" });
   }
 };
@@ -202,12 +206,18 @@ const deleteApplication = async (req, res) => {
       return res.status(404).json({ message: "Application not found" });
     }
 
-    await prisma.application.delete({
-      where: { id: application.id },
-    });
+    await prisma.$transaction([
+      prisma.statusHistory.deleteMany({
+        where: { applicationId: application.id },
+      }),
+      prisma.application.delete({
+        where: { id: application.id },
+      }),
+    ]);
 
     res.json({ message: "Application deleted" });
   } catch (error) {
+    console.error("[applications.deleteApplication]", error);
     res.status(500).json({ message: "Failed to delete application" });
   }
 };

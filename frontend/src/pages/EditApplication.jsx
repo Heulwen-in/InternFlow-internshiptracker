@@ -4,7 +4,6 @@ import { getApplication, updateApplication } from "../api/applicationApi";
 import { getCompanies } from "../api/companyApi";
 
 const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
-const [statusHistory, setStatusHistory] = useState([]);
 
 const toInputDate = (value) => {
   if (!value) return "";
@@ -18,6 +17,7 @@ function EditApplication() {
   const [companies, setCompanies] = useState([]);
   const [form, setForm] = useState(null);
   const [error, setError] = useState("");
+  const [statusHistory, setStatusHistory] = useState([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -29,24 +29,6 @@ function EditApplication() {
 
         const application = applicationRes.data.application;
         setStatusHistory(application.statusHistory || []);
-
-        <section className="table-card compact-card">
-          <h2>Status History</h2>
-          {statusHistory.length === 0 ? (
-            <p className="muted">No status history yet.</p>
-          ) : (
-          <ul className="timeline">
-            {statusHistory.map((item) => (
-              <li key={item.id}>
-                <strong>
-                  {item.oldStatus || "Created"} → {item.newStatus}
-                </strong>
-                <span>{new Date(item.changedAt).toLocaleString()}</span>
-                </li>
-              ))}
-              </ul>
-            )}
-            </section>
 
         setCompanies(companiesRes.data.companies);
         setForm({
@@ -204,6 +186,24 @@ function EditApplication() {
 
         <button type="submit">Save Changes</button>
       </form>
+
+      <section className="table-card compact-card">
+        <h2>Status History</h2>
+        {statusHistory.length === 0 ? (
+          <p className="muted">No status history yet.</p>
+        ) : (
+          <ul className="timeline">
+            {statusHistory.map((item) => (
+              <li key={item.id}>
+                <strong>
+                  {item.oldStatus || "Created"} → {item.newStatus}
+                </strong>
+                <span>{new Date(item.changedAt).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }
