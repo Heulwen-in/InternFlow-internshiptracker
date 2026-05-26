@@ -112,9 +112,14 @@ function Applications() {
           <h1>Applications</h1>
           <p>Search, filter, and update your internship pipeline.</p>
         </div>
-        <Link className="button-link" to="/applications/new">
-          Add Application
-        </Link>
+        <div className="header-actions">
+          <Link className="button-link secondary" to="/applications/kanban">
+            View Kanban Board
+            </Link>
+            <Link className="button-link" to="/applications/new">
+            Add Application
+            </Link>
+            </div>
       </header>
 
       <section className="filters">
