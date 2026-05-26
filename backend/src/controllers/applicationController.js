@@ -27,7 +27,12 @@ const getApplication = async (req, res) => {
         id: Number(req.params.id),
         userId: req.user.id,
       },
-      include: { company: true },
+      include: { 
+        company: true,
+        statusHistory: {
+          orderBy: { changedAt: "desc" },
+        },
+       },
     });
 
     if (!application) {
@@ -83,8 +88,19 @@ const createApplication = async (req, res) => {
         appliedDate: toDate(appliedDate),
         deadline: toDate(deadline),
         priority,
+        statusHistory: {
+          create: {
+            oldStatus: null,
+            newStatus: status || "Saved",
+          },
+        },
       },
-      include: { company: true },
+      include: { 
+        company: true,
+        statusHistory: {
+          orderBy: { changeAt: "desc" }
+        },
+       },
     });
 
     res.status(201).json({ application });
@@ -135,6 +151,9 @@ const updateApplication = async (req, res) => {
       nextCompanyId = company.id;
     }
 
+    const statusChanged =
+    status !== undefined && status !== existingApplication.status;
+
     const application = await prisma.application.update({
       where: { id: existingApplication.id },
       data: {
@@ -147,8 +166,21 @@ const updateApplication = async (req, res) => {
         appliedDate: toDate(appliedDate),
         deadline: toDate(deadline),
         priority,
+        statusHistory: statusChanged 
+        ? {
+          create: {
+            oldStatus: existingApplication.status,
+            newStatus: status,
+          },
+        }
+        : undefined,
       },
-      include: { company: true },
+      include: { 
+        company: true,
+        statusHistory: {
+          orderBy: { changedAt: "desc" },
+        },
+      },
     });
 
     res.json({ application });
