@@ -637,3 +637,40 @@ td select {
   color: #64748b;
   font-size: 0.9rem;
 }
+
+.inline-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.inline-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.note-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.note-list li {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.note-list li:last-child {
+  border-bottom: 0;
+}
+
+.note-list p {
+  margin: 0;
+}
+
+.note-list span {
+  color: #64748b;
+  font-size: 0.85rem;
+}
