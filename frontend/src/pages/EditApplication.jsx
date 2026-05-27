@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getApplication, updateApplication } from "../api/applicationApi";
 import { getCompanies } from "../api/companyApi";
+import { createNote, deleteNote, getNotes } from "../api/noteApi";
 
 const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
 
@@ -18,6 +19,8 @@ function EditApplication() {
   const [form, setForm] = useState(null);
   const [error, setError] = useState("");
   const [statusHistory, setStatusHistory] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [noteContent, setNoteContent] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
@@ -29,6 +32,9 @@ function EditApplication() {
 
         const application = applicationRes.data.application;
         setStatusHistory(application.statusHistory || []);
+
+        const notesRes = await getNotes(id);
+        setNotes(notesRes.data.notes || []);
 
         setCompanies(companiesRes.data.companies);
         setForm({
@@ -64,6 +70,21 @@ function EditApplication() {
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update application");
     }
+  };
+
+  const handleCreateNote = async (event) => {
+    event.preventDefault();
+  
+    if (!noteContent.trim()) return;
+  
+    const res = await createNote(id, { content: noteContent });
+    setNotes((current) => [res.data.note, ...current]);
+    setNoteContent("");
+  };
+  
+  const handleDeleteNote = async (noteId) => {
+    await deleteNote(noteId);
+    setNotes((current) => current.filter((note) => note.id !== noteId));
   };
 
   if (!form) {
@@ -204,8 +225,40 @@ function EditApplication() {
           </ul>
         )}
       </section>
-    </main>
-  );
-}
+
+      <section className="table-card compact-card">
+        <h2>Notes</h2>
+        <form className="inline-form" onSubmit={handleCreateNote}>
+          <textarea
+          placeholder="Add interview feedback, recruiter details, or next steps"
+          value={noteContent}
+          onChange={(e) => setNoteContent(e.target.value)}
+          />
+          <button type="submit">Add Note</button>
+          </form>
+
+          {notes.length === 0 ? (
+            <p className="muted">No notes yet.</p>
+          ) : (
+          <ul className="note-list">
+            {notes.map((note) => (
+              <li key={note.id}>
+                <p>{note.content}</p>
+                <span>{new Date(note.createdAt).toLocaleString()}</span>
+                <button
+                type="button"
+                className="button-danger"
+                onClick={() => handleDeleteNote(note.id)}
+                >
+                  Delete
+                  </button>
+                  </li>
+                ))}
+                </ul>
+              )}
+              </section>
+              </main>
+              );
+            }
 
 export default EditApplication;
