@@ -17,13 +17,19 @@ function EditApplication() {
 
   const [companies, setCompanies] = useState([]);
   const [form, setForm] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notesError, setNotesError] = useState("");
   const [statusHistory, setStatusHistory] = useState([]);
   const [notes, setNotes] = useState([]);
   const [noteContent, setNoteContent] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
+      setError("");
+      setNotesError("");
+
       try {
         const [applicationRes, companiesRes] = await Promise.all([
           getApplication(id),
@@ -32,10 +38,6 @@ function EditApplication() {
 
         const application = applicationRes.data.application;
         setStatusHistory(application.statusHistory || []);
-
-        const notesRes = await getNotes(id);
-        setNotes(notesRes.data.notes || []);
-
         setCompanies(companiesRes.data.companies);
         setForm({
           companyId: String(application.companyId),
@@ -48,8 +50,17 @@ function EditApplication() {
           deadline: toInputDate(application.deadline),
           priority: application.priority || "Medium",
         });
+
+        try {
+          const notesRes = await getNotes(id);
+          setNotes(notesRes.data.notes || []);
+        } catch {
+          setNotesError("Failed to load notes");
+        }
       } catch {
         setError("Failed to load application");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -87,10 +98,22 @@ function EditApplication() {
     setNotes((current) => current.filter((note) => note.id !== noteId));
   };
 
-  if (!form) {
+  if (isLoading) {
     return (
       <main className="dashboard">
         <p className="muted">Loading application...</p>
+      </main>
+    );
+  }
+
+  if (!form) {
+    return (
+      <main className="dashboard">
+        <Link to="/applications" className="back-link">
+          &lt; Back to applications
+        </Link>
+        {error && <div className="alert">{error}</div>}
+        {!error && <p className="muted">Application not found.</p>}
       </main>
     );
   }
@@ -228,6 +251,7 @@ function EditApplication() {
 
       <section className="table-card compact-card">
         <h2>Notes</h2>
+        {notesError && <div className="alert">{notesError}</div>}
         <form className="inline-form" onSubmit={handleCreateNote}>
           <textarea
           placeholder="Add interview feedback, recruiter details, or next steps"
