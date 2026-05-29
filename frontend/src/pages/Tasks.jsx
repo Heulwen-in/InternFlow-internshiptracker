@@ -3,11 +3,6 @@ import { Link } from "react-router-dom";
 import { createTask, deleteTask, getTasks, updateTask } from "../api/taskApi";
 import { getApplications } from "../api/applicationApi";
 
-const toInputDate = (value) => {
-  if (!value) return "";
-  return new Date(value).toISOString().slice(0, 10);
-};
-
 function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [applications, setApplications] = useState([]);
