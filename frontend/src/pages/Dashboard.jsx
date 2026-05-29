@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getApplications } from "../api/applicationApi";
 import { useAuth } from "../context/useAuth";
+import { getTasks } from "../api/taskApi";
 
 const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
 
@@ -10,14 +11,22 @@ function Dashboard() {
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadApplications = async () => {
       try {
-        const res = await getApplications();
-        if (!cancelled) setApplications(res.data.applications);
+        const [applicationsRes, tasksRes] = await Promise.all([
+          getApplications(),
+          getTasks(),
+        ]);
+
+        if (!cancelled) {
+          setApplications(applicationsRes.data.applications);
+          setTasks(tasksRes.data.tasks);
+        }
       } catch {
         if (!cancelled) setError("Failed to load dashboard data");
       } finally {
@@ -39,9 +48,17 @@ function Dashboard() {
     }, {});
   }, [applications]);
 
+  const openTasks = tasks.filter((task) => !task.completed).length;
+  const completedTasks = tasks.filter((task) => task.completed).length;
+
   const upcomingDeadlines = applications
     .filter((app) => app.deadline)
     .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+    .slice(0, 3);
+
+  const upcomingTasks = tasks
+    .filter((task) => !task.completed && task.dueDate)
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
     .slice(0, 3);
 
   return (
@@ -74,6 +91,14 @@ function Dashboard() {
               <span>Offers</span>
               <strong>{statusCounts.Offer || 0}</strong>
             </article>
+            <article>
+              <span>Open Tasks</span>
+              <strong>{openTasks}</strong>
+            </article>
+            <article>
+              <span>Completed Tasks</span>
+              <strong>{completedTasks}</strong>
+            </article>
           </section>
 
           <section className="status-grid">
@@ -104,9 +129,29 @@ function Dashboard() {
             )}
           </section>
 
+          <section className="table-card compact-card">
+            <h2>Upcoming Tasks</h2>
+
+            {upcomingTasks.length === 0 ? (
+              <p className="muted">No upcoming tasks yet.</p>
+            ) : (
+              <ul className="task-list">
+                {upcomingTasks.map((task) => (
+                  <li key={task.id}>
+                    <span>{task.title}</span>
+                    <strong>{new Date(task.dueDate).toLocaleDateString()}</strong>
+                    </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           <section className="dashboard-actions">
             <Link className="button-link secondary" to="/applications">
               View Applications
+            </Link>
+            <Link className="button-link secondary" to="/tasks">
+              View Tasks
             </Link>
             <Link className="button-link" to="/applications/new">
               + Add Application

@@ -8,6 +8,7 @@ import Register from "./pages/Register";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import EditApplication from "./pages/EditApplication";
 import KanbanBoard from "./pages/KanbanBoard";
+import Tasks from "./pages/Tasks";
 
 function App() {
   return (
@@ -55,6 +56,14 @@ function App() {
         element={
           <ProtectedRoute>
             <KanbanBoard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tasks"
+        element={
+          <ProtectedRoute>
+            <Tasks />
           </ProtectedRoute>
         }
       />
