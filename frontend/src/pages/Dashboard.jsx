@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getApplications } from "../api/applicationApi";
 import { useAuth } from "../context/useAuth";
 import { getTasks } from "../api/taskApi";
+import { getInterviews } from "../api/interviewApi";
 
 const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
 
@@ -12,20 +13,23 @@ function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [tasks, setTasks] = useState([]);
+  const [interviews, setInterviews] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadApplications = async () => {
       try {
-        const [applicationsRes, tasksRes] = await Promise.all([
+        const [applicationsRes, tasksRes, interviewsRes] = await Promise.all([
           getApplications(),
           getTasks(),
+          getInterviews(),
         ]);
 
         if (!cancelled) {
           setApplications(applicationsRes.data.applications);
           setTasks(tasksRes.data.tasks);
+          setInterviews(interviewsRes.data.interviews);
         }
       } catch {
         if (!cancelled) setError("Failed to load dashboard data");
@@ -59,6 +63,11 @@ function Dashboard() {
   const upcomingTasks = tasks
     .filter((task) => !task.completed && task.dueDate)
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+    .slice(0, 3);
+
+  const upcomingInterviews = interviews
+    .filter((interview) => interview.interviewDate)
+    .sort((a, b) => new Date(a.interviewDate) - new Date(b.interviewDate))
     .slice(0, 3);
 
   return (
@@ -141,6 +150,22 @@ function Dashboard() {
                     <span>{task.title}</span>
                     <strong>{new Date(task.dueDate).toLocaleDateString()}</strong>
                     </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="table-card compact-card">
+            <h2>Upcoming Interviews</h2>
+            
+            {upcomingInterviews.length === 0 ? (
+              <p className="muted">No upcoming interviews yet.</p>
+            ) : (
+              <ul className="interview-list">
+                {upcomingInterviews.map((interview) => (
+                  <li key={interview.id}>
+                    <span>{interview.interviewType}</span>
+                  </li>
                 ))}
               </ul>
             )}
