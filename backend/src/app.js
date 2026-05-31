@@ -5,6 +5,7 @@ const companyRoutes = require("./routes/companyRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const noteRoutes = require("./routes/noteRoutes");
 const taskRoutes = require("./routes/taskRoutes");
+const interviewRoutes = require("./routes/interviewRoutes");
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.use("/api/companies", companyRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api", noteRoutes);
 app.use("/api", taskRoutes);
+app.use("/api", interviewRoutes);
 
 module.exports = app;
