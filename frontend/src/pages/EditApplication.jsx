@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { getApplication, updateApplication } from "../api/applicationApi";
 import { getCompanies } from "../api/companyApi";
 import { createNote, deleteNote, getNotes } from "../api/noteApi";
+import { createInterview, deleteInterview, getApplicationInterviews } from "../api/interviewApi";
 
 const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
 
@@ -23,6 +24,13 @@ function EditApplication() {
   const [statusHistory, setStatusHistory] = useState([]);
   const [notes, setNotes] = useState([]);
   const [noteContent, setNoteContent] = useState("");
+  const [interviews, setInterviews] = useState([]);
+  const [interviewForm, setInterviewForm] = useState({
+    interviewDate: "",
+    interviewType: "",
+    meetingLink: "",
+    notes: "",
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -37,6 +45,8 @@ function EditApplication() {
         ]);
 
         const application = applicationRes.data.application;
+        const interviewsRes = await getApplicationInterviews(id);
+        setInterviews(interviewsRes.data.interviews || []);
         setStatusHistory(application.statusHistory || []);
         setCompanies(companiesRes.data.companies);
         setForm({
@@ -96,6 +106,26 @@ function EditApplication() {
   const handleDeleteNote = async (noteId) => {
     await deleteNote(noteId);
     setNotes((current) => current.filter((note) => note.id !== noteId));
+  };
+
+  const handleCreateInterview = async (event) => {
+    event.preventDefault();
+  
+    const res = await createInterview(id, interviewForm);
+    setInterviews((current) => [...current, res.data.interview]);
+    setInterviewForm({
+      interviewDate: "",
+      interviewType: "Technical",
+      meetingLink: "",
+      notes: "",
+    });
+  };
+  
+  const handleDeleteInterview = async (interviewId) => {
+    await deleteInterview(interviewId);
+    setInterviews((current) =>
+      current.filter((interview) => interview.id !== interviewId)
+    );
   };
 
   if (isLoading) {
@@ -272,8 +302,7 @@ function EditApplication() {
                 <button
                 type="button"
                 className="button-danger"
-                onClick={() => handleDeleteNote(note.id)}
-                >
+                onClick={() => handleDeleteNote(note.id)}>
                   Delete
                   </button>
                   </li>
@@ -281,8 +310,74 @@ function EditApplication() {
                 </ul>
               )}
               </section>
-              </main>
-              );
-            }
+
+              <section className="table-card compact-card">
+                <h2>Interviews</h2>
+                
+                <form className="inline-form" onSubmit={handleCreateInterview}>
+                  <input
+                  type="datetime-local"
+                  value={interviewForm.interviewDate}
+                  onChange={(e) =>
+                    setInterviewForm({ ...interviewForm, interviewDate: e.target.value })
+                  }
+                  required
+                  />
+                  
+                  <select
+                  value={interviewForm.interviewType}
+                  onChange={(e) =>
+                    setInterviewForm({ ...interviewForm, interviewType: e.target.value })
+                  }
+                  >
+                    <option>HR</option>
+                    <option>Technical</option>
+                    <option>Behavioral</option>
+                    <option>Final</option>
+                  </select>
+                    
+                  <input
+                    placeholder="Meeting link"
+                    value={interviewForm.meetingLink}
+                    onChange={(e) =>
+                      setInterviewForm({ ...interviewForm, meetingLink: e.target.value })
+                    }
+                  />
+                  <textarea
+                    placeholder="Interview notes"
+                    value={interviewForm.notes}
+                    onChange={(e) =>
+                      setInterviewForm({ ...interviewForm, notes: e.target.value })
+                    }
+                    />
+                    
+                    <button type="submit">Add Interview</button>
+                  </form>
+                  
+                  {interviews.length === 0 ? (
+                    <p className="muted">No interviews scheduled yet.</p>
+                  ) : (
+                    <ul className="note-list">
+                      {interviews.map((interview) => (
+                        <li key={interview.id}>
+                          <strong>{interview.interviewType || "Interview"}</strong>
+                          <span>{new Date(interview.interviewDate).toLocaleString()}</span>
+                          {interview.meetingLink && <a href={interview.meetingLink}>Meeting link</a>}
+                          {interview.notes && <p>{interview.notes}</p>}
+                          <button
+                            type="button"
+                            className="button-danger"
+                            onClick={() => handleDeleteInterview(interview.id)}
+                          >
+                            Delete
+                            </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </section>
+                  </main>
+                );
+              }
 
 export default EditApplication;
