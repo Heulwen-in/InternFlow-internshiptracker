@@ -66,7 +66,7 @@ function Dashboard() {
     .slice(0, 3);
 
   const upcomingInterviews = interviews
-    .filter((interview) => interview.interviewDate)
+    .filter((interview) => new Date(interview.interviewDate) >= new Date())
     .sort((a, b) => new Date(a.interviewDate) - new Date(b.interviewDate))
     .slice(0, 3);
 
