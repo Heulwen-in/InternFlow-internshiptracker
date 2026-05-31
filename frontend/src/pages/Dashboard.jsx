@@ -108,6 +108,10 @@ function Dashboard() {
               <span>Completed Tasks</span>
               <strong>{completedTasks}</strong>
             </article>
+            <article>
+              <span>Upcoming interviews</span>
+              <strong>{upcomingInterviews.length}</strong>
+            </article>
           </section>
 
           <section className="status-grid">
@@ -161,13 +165,16 @@ function Dashboard() {
             {upcomingInterviews.length === 0 ? (
               <p className="muted">No upcoming interviews yet.</p>
             ) : (
-              <ul className="interview-list">
-                {upcomingInterviews.map((interview) => (
-                  <li key={interview.id}>
-                    <span>{interview.interviewType}</span>
-                  </li>
-                ))}
-              </ul>
+            <ul className="deadline-list">
+              {upcomingInterviews.map((interview) => (
+                <li key={interview.id}>
+                  <span>
+                    {interview.application?.company?.name} - {interview.application?.roleTitle}
+                  </span>
+                  <strong>{new Date(interview.interviewDate).toLocaleString()}</strong>
+                </li>
+              ))}
+            </ul>
             )}
           </section>
 
