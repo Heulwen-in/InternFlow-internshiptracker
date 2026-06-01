@@ -3,9 +3,20 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { getApplication, updateApplication } from "../api/applicationApi";
 import { getCompanies } from "../api/companyApi";
 import { createNote, deleteNote, getNotes } from "../api/noteApi";
-import { createInterview, deleteInterview, getApplicationInterviews } from "../api/interviewApi";
+import {
+  createInterview,
+  deleteInterview,
+  getApplicationInterviews,
+} from "../api/interviewApi";
 
-const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
+const statuses = [
+  "Saved",
+  "Applied",
+  "Online Assessment",
+  "Interview",
+  "Offer",
+  "Rejected",
+];
 
 const toInputDate = (value) => {
   if (!value) return "";
@@ -95,14 +106,14 @@ function EditApplication() {
 
   const handleCreateNote = async (event) => {
     event.preventDefault();
-  
+
     if (!noteContent.trim()) return;
-  
+
     const res = await createNote(id, { content: noteContent });
     setNotes((current) => [res.data.note, ...current]);
     setNoteContent("");
   };
-  
+
   const handleDeleteNote = async (noteId) => {
     await deleteNote(noteId);
     setNotes((current) => current.filter((note) => note.id !== noteId));
@@ -110,7 +121,7 @@ function EditApplication() {
 
   const handleCreateInterview = async (event) => {
     event.preventDefault();
-  
+
     const res = await createInterview(id, interviewForm);
     setInterviews((current) => [...current, res.data.interview]);
     setInterviewForm({
@@ -120,7 +131,7 @@ function EditApplication() {
       notes: "",
     });
   };
-  
+
   const handleDeleteInterview = async (interviewId) => {
     await deleteInterview(interviewId);
     setInterviews((current) =>
@@ -284,100 +295,103 @@ function EditApplication() {
         {notesError && <div className="alert">{notesError}</div>}
         <form className="inline-form" onSubmit={handleCreateNote}>
           <textarea
-          placeholder="Add interview feedback, recruiter details, or next steps"
-          value={noteContent}
-          onChange={(e) => setNoteContent(e.target.value)}
+            placeholder="Add interview feedback, recruiter details, or next steps"
+            value={noteContent}
+            onChange={(e) => setNoteContent(e.target.value)}
           />
           <button type="submit">Add Note</button>
-          </form>
+        </form>
 
-          {notes.length === 0 ? (
-            <p className="muted">No notes yet.</p>
-          ) : (
+        {notes.length === 0 ? (
+          <p className="muted">No notes yet.</p>
+        ) : (
           <ul className="note-list">
             {notes.map((note) => (
               <li key={note.id}>
                 <p>{note.content}</p>
                 <span>{new Date(note.createdAt).toLocaleString()}</span>
                 <button
-                type="button"
-                className="button-danger"
-                onClick={() => handleDeleteNote(note.id)}>
+                  type="button"
+                  className="button-danger"
+                  onClick={() => handleDeleteNote(note.id)}
+                >
                   Delete
-                  </button>
-                  </li>
-                ))}
-                </ul>
-              )}
-              </section>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-              <section className="table-card compact-card">
-                <h2>Interviews</h2>
-                
-                <form className="inline-form" onSubmit={handleCreateInterview}>
-                  <input
-                  type="datetime-local"
-                  value={interviewForm.interviewDate}
-                  onChange={(e) =>
-                    setInterviewForm({ ...interviewForm, interviewDate: e.target.value })
-                  }
-                  required
-                  />
-                  
-                  <select
-                  value={interviewForm.interviewType}
-                  onChange={(e) =>
-                    setInterviewForm({ ...interviewForm, interviewType: e.target.value })
-                  }
-                  >
-                    <option>HR</option>
-                    <option>Technical</option>
-                    <option>Behavioral</option>
-                    <option>Final</option>
-                  </select>
-                    
-                  <input
-                    placeholder="Meeting link"
-                    value={interviewForm.meetingLink}
-                    onChange={(e) =>
-                      setInterviewForm({ ...interviewForm, meetingLink: e.target.value })
-                    }
-                  />
-                  <textarea
-                    placeholder="Interview notes"
-                    value={interviewForm.notes}
-                    onChange={(e) =>
-                      setInterviewForm({ ...interviewForm, notes: e.target.value })
-                    }
-                    />
-                    
-                    <button type="submit">Add Interview</button>
-                  </form>
-                  
-                  {interviews.length === 0 ? (
-                    <p className="muted">No interviews scheduled yet.</p>
-                  ) : (
-                    <ul className="note-list">
-                      {interviews.map((interview) => (
-                        <li key={interview.id}>
-                          <strong>{interview.interviewType || "Interview"}</strong>
-                          <span>{new Date(interview.interviewDate).toLocaleString()}</span>
-                          {interview.meetingLink && <a href={interview.meetingLink}>Meeting link</a>}
-                          {interview.notes && <p>{interview.notes}</p>}
-                          <button
-                            type="button"
-                            className="button-danger"
-                            onClick={() => handleDeleteInterview(interview.id)}
-                          >
-                            Delete
-                            </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </section>
-                  </main>
-                );
-              }
+      <section className="table-card compact-card">
+        <h2>Interviews</h2>
+
+        <form className="inline-form" onSubmit={handleCreateInterview}>
+          <input
+            type="datetime-local"
+            value={interviewForm.interviewDate}
+            onChange={(e) =>
+              setInterviewForm({ ...interviewForm, interviewDate: e.target.value })
+            }
+            required
+          />
+
+          <select
+            value={interviewForm.interviewType}
+            onChange={(e) =>
+              setInterviewForm({ ...interviewForm, interviewType: e.target.value })
+            }
+          >
+            <option>HR</option>
+            <option>Technical</option>
+            <option>Behavioral</option>
+            <option>Final</option>
+          </select>
+
+          <input
+            placeholder="Meeting link"
+            value={interviewForm.meetingLink}
+            onChange={(e) =>
+              setInterviewForm({ ...interviewForm, meetingLink: e.target.value })
+            }
+          />
+          <textarea
+            placeholder="Interview notes"
+            value={interviewForm.notes}
+            onChange={(e) =>
+              setInterviewForm({ ...interviewForm, notes: e.target.value })
+            }
+          />
+
+          <button type="submit">Add Interview</button>
+        </form>
+
+        {interviews.length === 0 ? (
+          <p className="muted">No interviews scheduled yet.</p>
+        ) : (
+          <ul className="note-list">
+            {interviews.map((interview) => (
+              <li key={interview.id}>
+                <strong>{interview.interviewType || "Interview"}</strong>
+                <span>{new Date(interview.interviewDate).toLocaleString()}</span>
+                {interview.meetingLink && (
+                  <a href={interview.meetingLink}>Meeting link</a>
+                )}
+                {interview.notes && <p>{interview.notes}</p>}
+                <button
+                  type="button"
+                  className="button-danger"
+                  onClick={() => handleDeleteInterview(interview.id)}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
+  );
+}
 
 export default EditApplication;

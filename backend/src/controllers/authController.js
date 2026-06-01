@@ -1,89 +1,78 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const prisma = require("../config/prisma");
-
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-};
+const authService = require("../services/authService");
 
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return res.status(409).json({ message: "Email already registered" });
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        passwordHash,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true,
-      },
-    });
-
-    const token = generateToken(user.id);
-
-    res.status(201).json({ user, token });
+    const { name, email, password } = req.body ?? {};
+    const result = await authService.register({ name, email, password });
+    res.status(201).json(result);
   } catch (error) {
     console.error("[register] error:", error);
-    res.status(500).json({ message: "Registration failed" });
+    res
+      .status(error.status || 500)
+      .json({ message: error.message || "Registration failed" });
   }
 };
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    const token = generateToken(user.id);
-
-    res.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        createdAt: user.createdAt,
-      },
-      token,
-    });
+    const { email, password } = req.body ?? {};
+    const result = await authService.login({ email, password });
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ message: "Login failed" });
+    console.error("[login] error:", error);
+    res.status(error.status || 500).json({ message: error.message || "Login failed" });
+  }
+};
+
+const verifyEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body ?? {};
+    const result = await authService.verifyEmail({ email, otp });
+    res.json(result);
+  } catch (error) {
+    console.error("[verifyEmail] error:", error);
+    res
+      .status(error.status || 500)
+      .json({ message: error.message || "Email verification failed" });
+  }
+};
+
+const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body ?? {};
+    const result = await authService.resendVerification({ email });
+    res.json(result);
+  } catch (error) {
+    console.error("[resendVerification] error:", error);
+    res
+      .status(error.status || 500)
+      .json({ message: error.message || "Failed to resend verification code" });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body ?? {};
+    const result = await authService.forgotPassword({ email });
+    res.json(result);
+  } catch (error) {
+    console.error("[forgotPassword] error:", error);
+    res
+      .status(error.status || 500)
+      .json({ message: error.message || "Failed to send reset email" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body ?? {};
+    const result = await authService.resetPassword({ token, password });
+    res.json(result);
+  } catch (error) {
+    console.error("[resetPassword] error:", error);
+    res
+      .status(error.status || 500)
+      .json({ message: error.message || "Failed to reset password" });
   }
 };
 
@@ -94,5 +83,9 @@ const getMe = async (req, res) => {
 module.exports = {
   register,
   login,
+  verifyEmail,
+  resendVerification,
+  forgotPassword,
+  resetPassword,
   getMe,
 };

@@ -14,8 +14,18 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     const res = await api.post("/auth/register", { name, email, password });
+    return res.data;
+  };
+
+  const verifyEmail = async (email, otp) => {
+    const res = await api.post("/auth/verify-email", { email, otp });
     localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
+  };
+
+  const resendVerification = async (email) => {
+    const res = await api.post("/auth/resend-verification", { email });
+    return res.data;
   };
 
   const logout = () => {
@@ -52,6 +62,8 @@ export const AuthProvider = ({ children }) => {
         user,
         login,
         register,
+        verifyEmail,
+        resendVerification,
         logout,
         isAuthenticated: !!user,
         isLoading,

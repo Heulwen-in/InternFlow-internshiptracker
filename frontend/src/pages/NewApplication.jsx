@@ -3,7 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { createApplication } from "../api/applicationApi";
 import { createCompany, getCompanies } from "../api/companyApi";
 
-const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
+const statuses = [
+  "Saved",
+  "Applied",
+  "Online Assessment",
+  "Interview",
+  "Offer",
+  "Rejected",
+];
 
 function NewApplication() {
   const navigate = useNavigate();
@@ -96,7 +103,9 @@ function NewApplication() {
             Website
             <input
               value={companyForm.website}
-              onChange={(e) => setCompanyForm({ ...companyForm, website: e.target.value })}
+              onChange={(e) =>
+                setCompanyForm({ ...companyForm, website: e.target.value })
+              }
             />
           </label>
 

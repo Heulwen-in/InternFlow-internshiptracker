@@ -28,12 +28,12 @@ const getApplication = async (req, res) => {
         id: Number(req.params.id),
         userId: req.user.id,
       },
-      include: { 
+      include: {
         company: true,
         statusHistory: {
           orderBy: { changedAt: "desc" },
         },
-       },
+      },
     });
 
     if (!application) {
@@ -154,8 +154,7 @@ const updateApplication = async (req, res) => {
       nextCompanyId = company.id;
     }
 
-    const statusChanged =
-    status !== undefined && status !== existingApplication.status;
+    const statusChanged = status !== undefined && status !== existingApplication.status;
 
     const application = await prisma.application.update({
       where: { id: existingApplication.id },
@@ -169,16 +168,16 @@ const updateApplication = async (req, res) => {
         appliedDate: toDate(appliedDate),
         deadline: toDate(deadline),
         priority,
-        statusHistory: statusChanged 
-        ? {
-          create: {
-            oldStatus: existingApplication.status,
-            newStatus: status,
-          },
-        }
-        : undefined,
+        statusHistory: statusChanged
+          ? {
+              create: {
+                oldStatus: existingApplication.status,
+                newStatus: status,
+              },
+            }
+          : undefined,
       },
-      include: { 
+      include: {
         company: true,
         statusHistory: {
           orderBy: { changedAt: "desc" },
@@ -207,6 +206,12 @@ const deleteApplication = async (req, res) => {
     }
 
     await prisma.$transaction([
+      prisma.note.deleteMany({
+        where: { applicationId: application.id },
+      }),
+      prisma.interview.deleteMany({
+        where: { applicationId: application.id },
+      }),
       prisma.statusHistory.deleteMany({
         where: { applicationId: application.id },
       }),

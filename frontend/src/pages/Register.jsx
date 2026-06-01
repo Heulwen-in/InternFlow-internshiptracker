@@ -16,7 +16,7 @@ function Register() {
 
     try {
       await register(form.name, form.email, form.password);
-      navigate("/dashboard");
+      navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
     }

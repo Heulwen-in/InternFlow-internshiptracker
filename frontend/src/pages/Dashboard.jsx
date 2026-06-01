@@ -5,7 +5,14 @@ import { useAuth } from "../context/useAuth";
 import { getTasks } from "../api/taskApi";
 import { getInterviews } from "../api/interviewApi";
 
-const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
+const statuses = [
+  "Saved",
+  "Applied",
+  "Online Assessment",
+  "Interview",
+  "Offer",
+  "Rejected",
+];
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -153,7 +160,7 @@ function Dashboard() {
                   <li key={task.id}>
                     <span>{task.title}</span>
                     <strong>{new Date(task.dueDate).toLocaleDateString()}</strong>
-                    </li>
+                  </li>
                 ))}
               </ul>
             )}
@@ -161,20 +168,21 @@ function Dashboard() {
 
           <section className="table-card compact-card">
             <h2>Upcoming Interviews</h2>
-            
+
             {upcomingInterviews.length === 0 ? (
               <p className="muted">No upcoming interviews yet.</p>
             ) : (
-            <ul className="deadline-list">
-              {upcomingInterviews.map((interview) => (
-                <li key={interview.id}>
-                  <span>
-                    {interview.application?.company?.name} - {interview.application?.roleTitle}
-                  </span>
-                  <strong>{new Date(interview.interviewDate).toLocaleString()}</strong>
-                </li>
-              ))}
-            </ul>
+              <ul className="deadline-list">
+                {upcomingInterviews.map((interview) => (
+                  <li key={interview.id}>
+                    <span>
+                      {interview.application?.company?.name} -{" "}
+                      {interview.application?.roleTitle}
+                    </span>
+                    <strong>{new Date(interview.interviewDate).toLocaleString()}</strong>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 

@@ -2,9 +2,12 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import Applications from "./pages/Applications";
 import Dashboard from "./pages/Dashboard";
+import ForgotPassword from "./pages/ForgotPassword";
 import Login from "./pages/Login";
 import NewApplication from "./pages/NewApplication";
 import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import EditApplication from "./pages/EditApplication";
 import KanbanBoard from "./pages/KanbanBoard";
@@ -16,6 +19,9 @@ function App() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route
         path="/dashboard"
@@ -51,7 +57,7 @@ function App() {
           </ProtectedRoute>
         }
       />
-        <Route
+      <Route
         path="/applications/kanban"
         element={
           <ProtectedRoute>

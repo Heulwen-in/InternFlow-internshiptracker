@@ -6,7 +6,14 @@ import {
   updateApplication,
 } from "../api/applicationApi";
 
-const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
+const statuses = [
+  "Saved",
+  "Applied",
+  "Online Assessment",
+  "Interview",
+  "Offer",
+  "Rejected",
+];
 const priorities = ["Low", "Medium", "High"];
 const workTypes = ["Remote", "Hybrid", "On-site"];
 
@@ -90,16 +97,14 @@ function Applications() {
 
   const handleStatusChange = async (application, status) => {
     try {
-    const res = await updateApplication(application.id, { status });
+      const res = await updateApplication(application.id, { status });
 
-    setApplications((current) =>
-      current.map((item) =>
-        item.id === application.id ? res.data.application : item
-      )
-    );
-  } catch {
-    setError("Failed to update status");
-  }
+      setApplications((current) =>
+        current.map((item) => (item.id === application.id ? res.data.application : item))
+      );
+    } catch {
+      setError("Failed to update status");
+    }
   };
 
   return (
@@ -115,11 +120,11 @@ function Applications() {
         <div className="header-actions">
           <Link className="button-link secondary" to="/applications/kanban">
             View Kanban Board
-            </Link>
-            <Link className="button-link" to="/applications/new">
+          </Link>
+          <Link className="button-link" to="/applications/new">
             Add Application
-            </Link>
-            </div>
+          </Link>
+        </div>
       </header>
 
       <section className="filters">
@@ -136,14 +141,20 @@ function Applications() {
           ))}
         </select>
 
-        <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+        <select
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+        >
           <option>All</option>
           {priorities.map((priority) => (
             <option key={priority}>{priority}</option>
           ))}
         </select>
 
-        <select value={workTypeFilter} onChange={(e) => setWorkTypeFilter(e.target.value)}>
+        <select
+          value={workTypeFilter}
+          onChange={(e) => setWorkTypeFilter(e.target.value)}
+        >
           <option>All</option>
           {workTypes.map((workType) => (
             <option key={workType}>{workType}</option>

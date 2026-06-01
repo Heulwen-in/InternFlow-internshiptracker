@@ -30,10 +30,12 @@
 }
 
 body {
-  background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.16), transparent 32rem),
+    radial-gradient(circle at top right, rgba(168, 85, 247, 0.12), transparent 28rem),
+    linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
   color: var(--color-text);
 }
-
 
 label {
   display: grid;
@@ -52,7 +54,9 @@ textarea {
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  transition: border-color var(--t-fast), box-shadow var(--t-fast),
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
     transform var(--t-fast);
 }
 
@@ -79,7 +83,9 @@ button {
   background: var(--color-primary);
   color: #fff;
   cursor: pointer;
-  transition: background var(--t-fast), transform var(--t-fast),
+  transition:
+    background var(--t-fast),
+    transform var(--t-fast),
     box-shadow var(--t-fast);
 }
 
@@ -96,6 +102,13 @@ button:active {
 button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
 }
 
 .button-ghost {
@@ -131,7 +144,9 @@ button:focus-visible {
   color: #fff;
   font-weight: 700;
   text-decoration: none;
-  transition: background var(--t-fast), transform var(--t-fast),
+  transition:
+    background var(--t-fast),
+    transform var(--t-fast),
     box-shadow var(--t-fast);
 }
 
@@ -159,14 +174,15 @@ button:focus-visible {
   text-decoration: none;
   font-weight: 600;
   font-size: 0.92rem;
-  transition: color var(--t-fast), transform var(--t-fast);
+  transition:
+    color var(--t-fast),
+    transform var(--t-fast);
 }
 
 .back-link:hover {
   color: var(--color-primary-hover);
   transform: translateX(-2px);
 }
-
 
 .alert {
   padding: 0.85rem 1rem;
@@ -178,23 +194,61 @@ button:focus-visible {
   animation: shake 320ms ease;
 }
 
+.notice {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-success-soft);
+  color: #166534;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
 .auth-page {
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-page::before {
+  content: "InternFlow";
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--color-primary-hover);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(16px);
 }
 
 .auth-card {
   width: min(100%, 440px);
   padding: 2.2rem;
-  background: var(--color-surface);
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.88);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   display: grid;
   gap: 1.1rem;
+  backdrop-filter: blur(18px);
   animation: fadeInUp 360ms var(--t-base);
+}
+
+.auth-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: linear-gradient(90deg, var(--color-primary), #a855f7, #ec4899);
 }
 
 .auth-card h1,
@@ -225,7 +279,6 @@ button:focus-visible {
   text-decoration: underline;
 }
 
-
 .dashboard {
   min-height: 100vh;
   max-width: 1100px;
@@ -240,16 +293,18 @@ button:focus-visible {
   gap: 1rem;
   align-items: center;
   margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(18px);
 }
 
 .dashboard-header h1 {
   font-size: 2rem;
   letter-spacing: -0.02em;
-  background: linear-gradient(
-    120deg,
-    var(--color-primary) 0%,
-    #a855f7 100%
-  );
+  background: linear-gradient(120deg, var(--color-primary) 0%, #a855f7 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -260,7 +315,6 @@ button:focus-visible {
   color: var(--color-text-mute);
 }
 
-
 .dashboard-grid {
   margin-top: 1.5rem;
   display: grid;
@@ -270,13 +324,27 @@ button:focus-visible {
 
 .dashboard-grid article {
   padding: 1.5rem;
-  background: var(--color-surface);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: transform var(--t-base), box-shadow var(--t-base),
+  transition:
+    transform var(--t-base),
+    box-shadow var(--t-base),
     border-color var(--t-base);
   cursor: default;
+}
+
+.dashboard-grid article::after {
+  content: "";
+  position: absolute;
+  inset: auto 1.5rem 0;
+  height: 4px;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(90deg, var(--color-primary), #a855f7);
+  opacity: 0.75;
 }
 
 .dashboard-grid article:hover {
@@ -311,10 +379,10 @@ button:focus-visible {
 
 .table-card {
   margin-top: 1.5rem;
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   overflow-x: auto;
   animation: fadeInUp 400ms var(--t-base);
 }
@@ -337,7 +405,7 @@ th {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: var(--color-bg-soft);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 tbody tr {
@@ -345,7 +413,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: var(--color-primary-soft);
+  background: rgba(238, 242, 255, 0.72);
 }
 
 tbody tr:last-child td {
@@ -407,11 +475,22 @@ tbody tr:last-child td {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-3px); }
-  80% { transform: translateX(3px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -424,6 +503,14 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 760px) {
+  .auth-page {
+    padding: 4.5rem 1rem 1.5rem;
+  }
+
+  .auth-page::before {
+    left: 1rem;
+  }
+
   .dashboard {
     padding: 1.5rem 1rem 3rem;
   }
@@ -447,6 +534,11 @@ tbody tr:last-child td {
   display: grid;
   grid-template-columns: 2fr repeat(4, 1fr);
   gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: var(--shadow-sm);
 }
 
 .filters input,
@@ -454,8 +546,8 @@ tbody tr:last-child td {
 td select {
   width: 100%;
   padding: 0.65rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
   background: white;
 }
 
@@ -482,7 +574,18 @@ td select {
   padding: 1rem;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--t-base),
+    border-color var(--t-base),
+    box-shadow var(--t-base);
+}
+
+.status-grid article:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
 }
 
 .status-grid span {
@@ -568,10 +671,11 @@ td select {
 
 .kanban-column {
   min-height: 420px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 1rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .kanban-column header {
@@ -602,9 +706,20 @@ td select {
   display: grid;
   gap: 0.5rem;
   padding: 0.9rem;
-  background: #f8fafc;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--t-fast),
+    border-color var(--t-fast),
+    box-shadow var(--t-fast);
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
 }
 
 .kanban-card strong {
@@ -660,6 +775,22 @@ td select {
   gap: 0.45rem;
   padding: 1rem 0;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.note-list li,
+.task-list li,
+.deadline-list li,
+.timeline li {
+  transition:
+    background var(--t-fast),
+    border-color var(--t-fast);
+}
+
+.note-list li:hover,
+.task-list li:hover,
+.deadline-list li:hover,
+.timeline li:hover {
+  background: rgba(248, 250, 252, 0.72);
 }
 
 .note-list li:last-child {

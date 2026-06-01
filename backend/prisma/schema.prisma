@@ -7,14 +7,19 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  applications Application[]
-  companies    Company[]
-  tasks Task[]
+  id                             Int      @id @default(autoincrement())
+  name                           String
+  email                          String   @unique
+  passwordHash                   String
+  emailVerified                  Boolean  @default(false)
+  emailVerificationOtpHash       String?
+  emailVerificationOtpExpiresAt  DateTime?
+  passwordResetTokenHash         String?
+  passwordResetTokenExpiresAt    DateTime?
+  createdAt                      DateTime @default(now())
+  applications                   Application[]
+  companies                      Company[]
+  tasks                          Task[]
 }
 
 model Company {

@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getApplications, updateApplicationStatus } from "../api/applicationApi";
 
-const statuses = ["Saved", "Applied", "Online Assessment", "Interview", "Offer", "Rejected"];
+const statuses = [
+  "Saved",
+  "Applied",
+  "Online Assessment",
+  "Interview",
+  "Offer",
+  "Rejected",
+];
 
 function KanbanBoard() {
   const [applications, setApplications] = useState([]);
@@ -23,7 +30,9 @@ function KanbanBoard() {
 
   const groupedApplications = useMemo(() => {
     return statuses.reduce((groups, status) => {
-      groups[status] = applications.filter((application) => application.status === status);
+      groups[status] = applications.filter(
+        (application) => application.status === status
+      );
       return groups;
     }, {});
   }, [applications]);
@@ -33,9 +42,7 @@ function KanbanBoard() {
       const res = await updateApplicationStatus(application.id, nextStatus);
 
       setApplications((current) =>
-        current.map((item) =>
-          item.id === application.id ? res.data.application : item
-        )
+        current.map((item) => (item.id === application.id ? res.data.application : item))
       );
     } catch {
       setError("Failed to update application status");

@@ -53,6 +53,10 @@ function Login() {
         <button type="submit">Login</button>
 
         <span>
+          <Link to="/forgot-password">Forgot password?</Link>
+        </span>
+
+        <span>
           No account yet? <Link to="/register">Create one</Link>
         </span>
       </form>

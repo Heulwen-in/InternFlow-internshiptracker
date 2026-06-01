@@ -25,7 +25,7 @@ const jwtSecret = process.env.JWT_SECRET.trim();
 if (PLACEHOLDER_SECRETS.has(jwtSecret)) {
   fail(
     "JWT_SECRET is using a placeholder value. Generate a real one with:\n" +
-      '  node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"'
+      "  node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\""
   );
 }
 if (jwtSecret.length < 32) {
@@ -43,4 +43,13 @@ module.exports = {
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret,
   corsOrigin,
+  appUrl: process.env.APP_URL || "http://localhost:5173",
+  mail: {
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE === "true",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    from: process.env.MAIL_FROM || "InternFlow <no-reply@internflow.local>",
+  },
 };
