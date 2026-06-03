@@ -10,7 +10,7 @@ const { sendMail } = require("../utils/mailer");
 const SALT_ROUNDS = 12;
 const TOKEN_TTL = "7d";
 const OTP_TTL_MINUTES = 2;
-const PASSWORD_RESET_TTL_MINUTES = 30;
+const PASSWORD_RESET_TTL_MINUTES = 5;
 
 function publicUser(user) {
   return {
@@ -147,9 +147,57 @@ async function sendPasswordResetEmail(email, token) {
     subject: "Reset your InternFlow password",
     text: `Reset your InternFlow password here: ${resetUrl}. This link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.`,
     html: `
-      <p>Use the link below to reset your InternFlow password:</p>
-      <p><a href="${resetUrl}">Reset password</a></p>
-      <p>This link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.</p>
+      <!doctype html>
+      <html>
+        <body style="margin: 0; padding: 0; background: #eef4ff; font-family: Arial, Helvetica, sans-serif; color: #334155;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #eef4ff; padding: 32px 16px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 720px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(49, 88, 183, 0.14);">
+                  <tr>
+                    <td align="center" style="padding: 28px 24px 22px;">
+                      <div style="display: inline-block; width: 40px; height: 40px; line-height: 40px; margin-right: 10px; border-radius: 10px; background: #3158d4; color: #ffffff; font-weight: 800; text-align: center;">
+                        IF
+                      </div>
+                      <span style="vertical-align: middle; color: #3158b7; font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">
+                        InternFlow
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center" style="background: #3158d4; padding: 52px 24px;">
+                      <div style="width: 160px; margin: 0 auto 24px; border-top: 2px solid rgba(255,255,255,0.65);">
+                        <span style="display: inline-block; margin-top: -13px; padding: 0 14px; background: #3158d4; color: #ffffff; font-size: 20px;">🔒</span>
+                      </div>
+                      <p style="margin: 0 0 14px; color: rgba(255,255,255,0.82); font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase;">
+                        Password reset request
+                      </p>
+                      <h1 style="margin: 0; color: #ffffff; font-size: 34px; line-height: 1.2; font-weight: 800;">
+                        Reset Your Password
+                      </h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 38px 44px 44px;">
+                      <p style="margin: 0 0 22px; font-size: 18px;">Hello,</p>
+                      <p style="margin: 0 0 24px; font-size: 17px; line-height: 1.7;">
+                        We received a request to reset your InternFlow password. Use the secure button below to choose a new password.
+                      </p>
+                      <p style="margin: 0 0 28px; font-size: 16px; line-height: 1.7;">
+                        This reset link will only be valid for the next <strong>${PASSWORD_RESET_TTL_MINUTES} minutes</strong>.
+                        If you did not request this reset, please ignore this email.
+                      </p>
+                      <a href="${resetUrl}" style="display: inline-block; padding: 14px 24px; border-radius: 8px; background: #f05a28; color: #ffffff; font-size: 16px; font-weight: 800; text-decoration: none;">
+                        Reset Password
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
     `,
   });
 }
@@ -325,6 +373,28 @@ async function forgotPassword({ email }) {
   };
 }
 
+async function validateResetToken({ token }) {
+  if (!token) {
+    throw new HttpError(400, "This link has been expired");
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetTokenHash: hashSecret(token),
+      passwordResetTokenExpiresAt: {
+        gt: new Date(),
+      },
+    },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new HttpError(400, "This link has been expired");
+  }
+
+  return { message: "Reset link is valid" };
+}
+
 async function resetPassword({ token, password }) {
   if (!token || !password) {
     throw new HttpError(400, "token and password are required");
@@ -343,7 +413,7 @@ async function resetPassword({ token, password }) {
   });
 
   if (!user) {
-    throw new HttpError(400, "Invalid or expired reset link");
+    throw new HttpError(400, "This link has been expired");
   }
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -374,6 +444,7 @@ module.exports = {
   verifyEmail,
   resendVerification,
   forgotPassword,
+  validateResetToken,
   resetPassword,
   verifyToken,
   publicUser,

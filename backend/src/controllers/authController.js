@@ -63,6 +63,19 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+const validateResetToken = async (req, res) => {
+  try {
+    const { token } = req.body ?? {};
+    const result = await authService.validateResetToken({ token });
+    res.json(result);
+  } catch (error) {
+    console.error("[validateResetToken] error:", error);
+    res
+      .status(error.status || 500)
+      .json({ message: error.message || "This link has been expired" });
+  }
+};
+
 const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body ?? {};
@@ -86,6 +99,7 @@ module.exports = {
   verifyEmail,
   resendVerification,
   forgotPassword,
+  validateResetToken,
   resetPassword,
   getMe,
 };
