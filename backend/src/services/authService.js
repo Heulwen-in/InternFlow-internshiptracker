@@ -47,6 +47,33 @@ function generateResetToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
+function getPasswordRuleFailures(password) {
+  const failures = [];
+
+  if (password.length <= 8) {
+    failures.push("be more than 8 characters");
+  }
+  if (!/\d/.test(password)) {
+    failures.push("include at least one number");
+  }
+  if (!/[A-Z]/.test(password)) {
+    failures.push("include at least one capital letter");
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    failures.push("include at least one special character");
+  }
+
+  return failures;
+}
+
+function assertStrongPassword(password) {
+  const failures = getPasswordRuleFailures(password);
+
+  if (failures.length > 0) {
+    throw new HttpError(400, `Password must ${failures.join(", and ")}.`);
+  }
+}
+
 function buildOtpBoxes(otp) {
   return otp
     .split("")
@@ -206,9 +233,7 @@ async function register({ name, email, password }) {
   if (!name || !email || !password) {
     throw new HttpError(400, "name, email and password are required");
   }
-  if (password.length < 8) {
-    throw new HttpError(400, "Password must be at least 8 characters long");
-  }
+  assertStrongPassword(password);
 
   const normalizedEmail = normalizeEmail(email);
 
@@ -399,9 +424,7 @@ async function resetPassword({ token, password }) {
   if (!token || !password) {
     throw new HttpError(400, "token and password are required");
   }
-  if (password.length < 8) {
-    throw new HttpError(400, "Password must be at least 8 characters long");
-  }
+  assertStrongPassword(password);
 
   const user = await prisma.user.findFirst({
     where: {
