@@ -130,60 +130,66 @@ function Dashboard() {
             ))}
           </section>
 
-          <section className="table-card compact-card">
-            <h2>Upcoming Deadlines</h2>
+          <section className="insight-grid">
+            <article className="table-card compact-card">
+              <h2>Upcoming Deadlines</h2>
 
-            {upcomingDeadlines.length === 0 ? (
-              <p className="muted">No upcoming deadlines yet.</p>
-            ) : (
-              <ul className="deadline-list">
-                {upcomingDeadlines.map((application) => (
-                  <li key={application.id}>
-                    <span>
-                      {application.company?.name} - {application.roleTitle}
-                    </span>
-                    <strong>{new Date(application.deadline).toLocaleDateString()}</strong>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+              {upcomingDeadlines.length === 0 ? (
+                <p className="muted">No upcoming deadlines yet.</p>
+              ) : (
+                <ul className="deadline-list">
+                  {upcomingDeadlines.map((application) => (
+                    <li key={application.id}>
+                      <span>
+                        {application.company?.name} - {application.roleTitle}
+                      </span>
+                      <strong>
+                        {new Date(application.deadline).toLocaleDateString()}
+                      </strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
 
-          <section className="table-card compact-card">
-            <h2>Upcoming Tasks</h2>
+            <article className="table-card compact-card">
+              <h2>Upcoming Tasks</h2>
 
-            {upcomingTasks.length === 0 ? (
-              <p className="muted">No upcoming tasks yet.</p>
-            ) : (
-              <ul className="task-list">
-                {upcomingTasks.map((task) => (
-                  <li key={task.id}>
-                    <span>{task.title}</span>
-                    <strong>{new Date(task.dueDate).toLocaleDateString()}</strong>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+              {upcomingTasks.length === 0 ? (
+                <p className="muted">No upcoming tasks yet.</p>
+              ) : (
+                <ul className="task-list">
+                  {upcomingTasks.map((task) => (
+                    <li key={task.id}>
+                      <span>{task.title}</span>
+                      <strong>{new Date(task.dueDate).toLocaleDateString()}</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
 
-          <section className="table-card compact-card">
-            <h2>Upcoming Interviews</h2>
+            <article className="table-card compact-card">
+              <h2>Upcoming Interviews</h2>
 
-            {upcomingInterviews.length === 0 ? (
-              <p className="muted">No upcoming interviews yet.</p>
-            ) : (
-              <ul className="deadline-list">
-                {upcomingInterviews.map((interview) => (
-                  <li key={interview.id}>
-                    <span>
-                      {interview.application?.company?.name} -{" "}
-                      {interview.application?.roleTitle}
-                    </span>
-                    <strong>{new Date(interview.interviewDate).toLocaleString()}</strong>
-                  </li>
-                ))}
-              </ul>
-            )}
+              {upcomingInterviews.length === 0 ? (
+                <p className="muted">No upcoming interviews yet.</p>
+              ) : (
+                <ul className="deadline-list">
+                  {upcomingInterviews.map((interview) => (
+                    <li key={interview.id}>
+                      <span>
+                        {interview.application?.company?.name} -{" "}
+                        {interview.application?.roleTitle}
+                      </span>
+                      <strong>
+                        {new Date(interview.interviewDate).toLocaleString()}
+                      </strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
           </section>
 
           <section className="dashboard-actions">
