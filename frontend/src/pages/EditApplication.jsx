@@ -23,6 +23,11 @@ const toInputDate = (value) => {
   return new Date(value).toISOString().slice(0, 10);
 };
 
+const getExternalUrl = (url) => {
+  if (!url) return "";
+  return url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`;
+};
+
 function EditApplication() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -290,16 +295,36 @@ function EditApplication() {
         )}
       </section>
 
-      <section className="table-card compact-card">
-        <h2>Notes</h2>
+      <section className="table-card compact-card comment-section">
+        <div className="comment-section__header">
+          <div>
+            <h2>Notes</h2>
+            <p>Add quick updates, recruiter details, and follow-up context.</p>
+          </div>
+          <span>{notes.length} notes</span>
+        </div>
         {notesError && <div className="alert">{notesError}</div>}
-        <form className="inline-form" onSubmit={handleCreateNote}>
+        <form className="comment-composer" onSubmit={handleCreateNote}>
+          <div className="comment-avatar" aria-hidden="true">
+            N
+          </div>
           <textarea
-            placeholder="Add interview feedback, recruiter details, or next steps"
+            placeholder="Add a note..."
             value={noteContent}
             onChange={(e) => setNoteContent(e.target.value)}
           />
-          <button type="submit">Add Note</button>
+          <div className="comment-actions">
+            <button
+              type="button"
+              className="button-ghost"
+              onClick={() => setNoteContent("")}
+            >
+              Cancel
+            </button>
+            <button type="submit" disabled={!noteContent.trim()}>
+              Add Note
+            </button>
+          </div>
         </form>
 
         {notes.length === 0 ? (
@@ -307,63 +332,101 @@ function EditApplication() {
         ) : (
           <ul className="note-list">
             {notes.map((note) => (
-              <li key={note.id}>
-                <p>{note.content}</p>
-                <span>{new Date(note.createdAt).toLocaleString()}</span>
-                <button
-                  type="button"
-                  className="button-danger"
-                  onClick={() => handleDeleteNote(note.id)}
-                >
-                  Delete
-                </button>
+              <li className="comment-item" key={note.id}>
+                <div className="comment-avatar" aria-hidden="true">
+                  N
+                </div>
+                <div className="comment-body">
+                  <div className="comment-meta">
+                    <strong>Note</strong>
+                    <span>{new Date(note.createdAt).toLocaleString()}</span>
+                  </div>
+                  <p>{note.content}</p>
+                  <div className="comment-item__actions">
+                    <button type="button" onClick={() => handleDeleteNote(note.id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <section className="table-card compact-card">
-        <h2>Interviews</h2>
+      <section className="table-card compact-card comment-section">
+        <div className="comment-section__header">
+          <div>
+            <h2>Interviews</h2>
+            <p>Schedule interviews and keep prep notes close to the application.</p>
+          </div>
+          <span>{interviews.length} interviews</span>
+        </div>
 
-        <form className="inline-form" onSubmit={handleCreateInterview}>
-          <input
-            type="datetime-local"
-            value={interviewForm.interviewDate}
-            onChange={(e) =>
-              setInterviewForm({ ...interviewForm, interviewDate: e.target.value })
-            }
-            required
-          />
+        <form
+          className="comment-composer interview-composer"
+          onSubmit={handleCreateInterview}
+        >
+          <div className="comment-avatar" aria-hidden="true">
+            I
+          </div>
+          <div className="interview-fields">
+            <div className="interview-field-grid">
+              <input
+                type="datetime-local"
+                value={interviewForm.interviewDate}
+                onChange={(e) =>
+                  setInterviewForm({ ...interviewForm, interviewDate: e.target.value })
+                }
+                required
+              />
 
-          <select
-            value={interviewForm.interviewType}
-            onChange={(e) =>
-              setInterviewForm({ ...interviewForm, interviewType: e.target.value })
-            }
-          >
-            <option>HR</option>
-            <option>Technical</option>
-            <option>Behavioral</option>
-            <option>Final</option>
-          </select>
+              <select
+                value={interviewForm.interviewType}
+                onChange={(e) =>
+                  setInterviewForm({ ...interviewForm, interviewType: e.target.value })
+                }
+              >
+                <option>HR</option>
+                <option>Technical</option>
+                <option>Behavioral</option>
+                <option>Final</option>
+              </select>
+            </div>
 
-          <input
-            placeholder="Meeting link"
-            value={interviewForm.meetingLink}
-            onChange={(e) =>
-              setInterviewForm({ ...interviewForm, meetingLink: e.target.value })
-            }
-          />
-          <textarea
-            placeholder="Interview notes"
-            value={interviewForm.notes}
-            onChange={(e) =>
-              setInterviewForm({ ...interviewForm, notes: e.target.value })
-            }
-          />
+            <input
+              placeholder="Meeting link"
+              value={interviewForm.meetingLink}
+              onChange={(e) =>
+                setInterviewForm({ ...interviewForm, meetingLink: e.target.value })
+              }
+            />
+            <textarea
+              placeholder="Add interview notes..."
+              value={interviewForm.notes}
+              onChange={(e) =>
+                setInterviewForm({ ...interviewForm, notes: e.target.value })
+              }
+            />
 
-          <button type="submit">Add Interview</button>
+            <div className="comment-actions">
+              <button
+                type="button"
+                className="button-ghost"
+                onClick={() =>
+                  setInterviewForm({
+                    interviewDate: "",
+                    interviewType: "Technical",
+                    meetingLink: "",
+                    notes: "",
+                  })
+                }
+              >
+                Cancel
+              </button>
+              <button type="submit">Add Interview</button>
+            </div>
+          </div>
         </form>
 
         {interviews.length === 0 ? (
@@ -371,20 +434,34 @@ function EditApplication() {
         ) : (
           <ul className="note-list">
             {interviews.map((interview) => (
-              <li key={interview.id}>
-                <strong>{interview.interviewType || "Interview"}</strong>
-                <span>{new Date(interview.interviewDate).toLocaleString()}</span>
-                {interview.meetingLink && (
-                  <a href={interview.meetingLink}>Meeting link</a>
-                )}
-                {interview.notes && <p>{interview.notes}</p>}
-                <button
-                  type="button"
-                  className="button-danger"
-                  onClick={() => handleDeleteInterview(interview.id)}
-                >
-                  Delete
-                </button>
+              <li className="comment-item" key={interview.id}>
+                <div className="comment-avatar" aria-hidden="true">
+                  I
+                </div>
+                <div className="comment-body">
+                  <div className="comment-meta">
+                    <strong>{interview.interviewType || "Interview"}</strong>
+                    <span>{new Date(interview.interviewDate).toLocaleString()}</span>
+                  </div>
+                  {interview.meetingLink && (
+                    <a
+                      href={getExternalUrl(interview.meetingLink)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Meeting link
+                    </a>
+                  )}
+                  {interview.notes && <p>{interview.notes}</p>}
+                  <div className="comment-item__actions">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteInterview(interview.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
