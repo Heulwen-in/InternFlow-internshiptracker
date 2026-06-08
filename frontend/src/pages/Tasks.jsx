@@ -62,6 +62,10 @@ function Tasks() {
     }
   };
 
+  const resetTaskForm = () => {
+    setForm({ title: "", dueDate: "", applicationId: "" });
+  };
+
   const handleToggleComplete = async (task) => {
     try {
       const res = await updateTask(task.id, {
@@ -98,49 +102,75 @@ function Tasks() {
 
       {error && <div className="alert">{error}</div>}
 
-      <section className="form-grid">
-        <form className="auth-card" onSubmit={handleCreateTask}>
-          <h2>Add Task</h2>
+      <section className="application-stack">
+        <form
+          className="table-card compact-card comment-section"
+          onSubmit={handleCreateTask}
+        >
+          <div className="comment-section__header">
+            <div>
+              <h2>Add Task</h2>
+              <p>Create a follow-up, deadline, or preparation reminder.</p>
+            </div>
+          </div>
 
-          <label>
-            Task title
-            <input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              required
-            />
-          </label>
+          <div className="comment-composer task-composer">
+            <div className="comment-avatar" aria-hidden="true">
+              T
+            </div>
 
-          <label>
-            Due date
-            <input
-              type="date"
-              value={form.dueDate}
-              onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-            />
-          </label>
+            <div className="task-composer-fields">
+              <input
+                placeholder="Add a task..."
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                required
+              />
 
-          <label>
-            Application
-            <select
-              value={form.applicationId}
-              onChange={(e) => setForm({ ...form, applicationId: e.target.value })}
-            >
-              <option value="">No linked application</option>
-              {applications.map((application) => (
-                <option key={application.id} value={application.id}>
-                  {application.company?.name} - {application.roleTitle}
-                </option>
-              ))}
-            </select>
-          </label>
+              <div className="task-form-grid">
+                <label>
+                  Due date
+                  <input
+                    type="date"
+                    value={form.dueDate}
+                    onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                  />
+                </label>
 
-          <button type="submit">Add Task</button>
+                <label>
+                  Application
+                  <select
+                    value={form.applicationId}
+                    onChange={(e) => setForm({ ...form, applicationId: e.target.value })}
+                  >
+                    <option value="">No linked application</option>
+                    {applications.map((application) => (
+                      <option key={application.id} value={application.id}>
+                        {application.company?.name} - {application.roleTitle}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="comment-actions">
+              <button type="button" className="button-ghost" onClick={resetTaskForm}>
+                Cancel
+              </button>
+              <button type="submit" disabled={!form.title.trim()}>
+                Add Task
+              </button>
+            </div>
+          </div>
         </form>
 
-        <section className="table-card compact-card">
+        <section className="table-card compact-card task-board-card">
           <div className="section-header">
-            <h2>Task List</h2>
+            <div>
+              <h2>Task List</h2>
+              <p className="muted">Review, complete, or remove follow-up items.</p>
+            </div>
             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
               <option value="open">Open</option>
               <option value="completed">Completed</option>
@@ -153,34 +183,34 @@ function Tasks() {
           ) : (
             <ul className="task-list">
               {filteredTasks.map((task) => (
-                <li key={task.id} data-completed={task.completed}>
-                  <label className="task-check">
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => handleToggleComplete(task)}
-                    />
-                    <span>{task.title}</span>
-                  </label>
+                <li className="task-item" key={task.id} data-completed={task.completed}>
+                  <div>
+                    <label className="task-check">
+                      <input
+                        type="checkbox"
+                        checked={task.completed}
+                        onChange={() => handleToggleComplete(task)}
+                      />
+                      <span>{task.title}</span>
+                    </label>
 
-                  <div className="task-meta">
-                    {task.dueDate && (
-                      <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
-                    )}
-                    {task.application && (
-                      <span>
-                        {task.application.company?.name} - {task.application.roleTitle}
-                      </span>
-                    )}
+                    <div className="task-meta">
+                      {task.dueDate && (
+                        <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                      )}
+                      {task.application && (
+                        <span>
+                          {task.application.company?.name} - {task.application.roleTitle}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    className="button-danger"
-                    onClick={() => handleDeleteTask(task.id)}
-                  >
-                    Delete
-                  </button>
+                  <div className="comment-item__actions">
+                    <button type="button" onClick={() => handleDeleteTask(task.id)}>
+                      Delete
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
