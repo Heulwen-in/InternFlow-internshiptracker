@@ -1,222 +1,201 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import { createTask, deleteTask, getTasks, updateTask } from "../api/taskApi";
 import { getApplications } from "../api/applicationApi";
+import { useUI } from "../context/UIContext";
+import { daysUntil, relDay } from "../utils/dates";
+import TaskCheck from "../components/TaskCheck";
+import EmptyState from "../components/EmptyState";
+
+const dangerInk = "oklch(var(--st-l) 0.12 22)";
 
 function Tasks() {
+  const { refreshKey, refresh, openApp } = useUI();
   const [tasks, setTasks] = useState([]);
-  const [applications, setApplications] = useState([]);
-  const [form, setForm] = useState({
-    title: "",
-    dueDate: "",
-    applicationId: "",
-  });
-  const [filter, setFilter] = useState("open");
-  const [error, setError] = useState("");
+  const [apps, setApps] = useState([]);
+  const [draft, setDraft] = useState("");
+  const [due, setDue] = useState("");
+  const [linkId, setLinkId] = useState("");
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [tasksRes, applicationsRes] = await Promise.all([
-          getTasks(),
-          getApplications(),
-        ]);
-
-        setTasks(tasksRes.data.tasks);
-        setApplications(applicationsRes.data.applications);
-      } catch {
-        setError("Failed to load tasks");
-      }
+    let cancelled = false;
+    const load = async () => {
+      const [tasksRes, appsRes] = await Promise.all([
+        getTasks(),
+        getApplications(),
+      ]);
+      if (cancelled) return;
+      setTasks(tasksRes.data.tasks || []);
+      setApps(appsRes.data.applications || []);
     };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
 
-    loadData();
-  }, []);
+  const open = tasks.filter((t) => !t.completed);
+  const done = tasks.filter((t) => t.completed);
+  const overdue = open.filter((t) => t.dueDate && daysUntil(t.dueDate) < 0);
+  const today = open.filter((t) => t.dueDate && daysUntil(t.dueDate) === 0);
+  const upcoming = open
+    .filter((t) => !t.dueDate || daysUntil(t.dueDate) > 0)
+    .sort(
+      (a, b) =>
+        (a.dueDate ? new Date(a.dueDate) : Infinity) -
+        (b.dueDate ? new Date(b.dueDate) : Infinity)
+    );
 
-  const filteredTasks = useMemo(() => {
-    if (filter === "completed") {
-      return tasks.filter((task) => task.completed);
-    }
+  const groups = [
+    ["Overdue", overdue, dangerInk],
+    ["Today", today, "var(--accent)"],
+    ["Upcoming", upcoming, null],
+    ["Done", done, null],
+  ];
 
-    if (filter === "all") {
-      return tasks;
-    }
-
-    return tasks.filter((task) => !task.completed);
-  }, [tasks, filter]);
-
-  const handleCreateTask = async (event) => {
-    event.preventDefault();
-    setError("");
-
-    try {
-      const res = await createTask({
-        title: form.title,
-        dueDate: form.dueDate || null,
-        applicationId: form.applicationId ? Number(form.applicationId) : null,
-      });
-
-      setTasks((current) => [res.data.task, ...current]);
-      setForm({ title: "", dueDate: "", applicationId: "" });
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create task");
-    }
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    if (!draft.trim()) return;
+    const res = await createTask({
+      title: draft.trim(),
+      dueDate: due || null,
+      applicationId: linkId ? Number(linkId) : null,
+    });
+    setTasks((cur) => [res.data.task, ...cur]);
+    setDraft("");
+    setDue("");
+    setLinkId("");
+    refresh();
   };
 
-  const resetTaskForm = () => {
-    setForm({ title: "", dueDate: "", applicationId: "" });
+  const handleToggle = async (task) => {
+    const res = await updateTask(task.id, { completed: !task.completed });
+    setTasks((cur) => cur.map((t) => (t.id === task.id ? res.data.task : t)));
+    refresh();
   };
 
-  const handleToggleComplete = async (task) => {
-    try {
-      const res = await updateTask(task.id, {
-        completed: !task.completed,
-      });
-
-      setTasks((current) =>
-        current.map((item) => (item.id === task.id ? res.data.task : item))
-      );
-    } catch {
-      setError("Failed to update task");
-    }
-  };
-
-  const handleDeleteTask = async (id) => {
-    if (!confirm("Delete this task?")) return;
-
+  const handleDelete = async (id) => {
     await deleteTask(id);
-    setTasks((current) => current.filter((task) => task.id !== id));
+    setTasks((cur) => cur.filter((t) => t.id !== id));
+    refresh();
   };
 
   return (
-    <main className="dashboard">
-      <Link to="/dashboard" className="back-link">
-        &lt; Back to dashboard
-      </Link>
-
-      <header className="dashboard-header">
+    <main className="page tasks-page">
+      <header className="page-head">
         <div>
-          <h1>Tasks</h1>
-          <p>Track follow-ups, deadlines, and preparation work.</p>
+          <h1 className="page-title">Tasks</h1>
+          <p className="page-sub">
+            {open.length} open · follow-ups, prep, and paperwork
+          </p>
         </div>
       </header>
 
-      {error && <div className="alert">{error}</div>}
-
-      <section className="application-stack">
-        <form
-          className="table-card compact-card comment-section"
-          onSubmit={handleCreateTask}
+      <form className="task-add" onSubmit={handleAdd}>
+        <input
+          className="input"
+          style={{ flex: "1 1 240px" }}
+          placeholder="Add a task — e.g. “Follow up with recruiter”"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <input
+          className="input"
+          type="date"
+          style={{ width: 150 }}
+          value={due}
+          onChange={(e) => setDue(e.target.value)}
+        />
+        <select
+          className="select"
+          style={{ width: 190 }}
+          value={linkId}
+          onChange={(e) => setLinkId(e.target.value)}
         >
-          <div className="comment-section__header">
-            <div>
-              <h2>Add Task</h2>
-              <p>Create a follow-up, deadline, or preparation reminder.</p>
-            </div>
-          </div>
+          <option value="">No application</option>
+          {apps.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.company?.name} — {a.roleTitle}
+            </option>
+          ))}
+        </select>
+        <button className="btn btn-primary" type="submit" disabled={!draft.trim()}>
+          <Plus size={14} /> Add
+        </button>
+      </form>
 
-          <div className="comment-composer task-composer">
-            <div className="comment-avatar" aria-hidden="true">
-              T
-            </div>
-
-            <div className="task-composer-fields">
-              <input
-                placeholder="Add a task..."
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                required
-              />
-
-              <div className="task-form-grid">
-                <label>
-                  Due date
-                  <input
-                    type="date"
-                    value={form.dueDate}
-                    onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-                  />
-                </label>
-
-                <label>
-                  Application
-                  <select
-                    value={form.applicationId}
-                    onChange={(e) => setForm({ ...form, applicationId: e.target.value })}
-                  >
-                    <option value="">No linked application</option>
-                    {applications.map((application) => (
-                      <option key={application.id} value={application.id}>
-                        {application.company?.name} - {application.roleTitle}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+      {groups.map(
+        ([label, list, color]) =>
+          list.length > 0 && (
+            <section key={label}>
+              <div className="task-group-label">
+                <span className="mono-label" style={color ? { color } : undefined}>
+                  {label} — {list.length}
+                </span>
               </div>
-            </div>
-
-            <div className="comment-actions">
-              <button type="button" className="button-ghost" onClick={resetTaskForm}>
-                Cancel
-              </button>
-              <button type="submit" disabled={!form.title.trim()}>
-                Add Task
-              </button>
-            </div>
-          </div>
-        </form>
-
-        <section className="table-card compact-card task-board-card">
-          <div className="section-header">
-            <div>
-              <h2>Task List</h2>
-              <p className="muted">Review, complete, or remove follow-up items.</p>
-            </div>
-            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <option value="open">Open</option>
-              <option value="completed">Completed</option>
-              <option value="all">All</option>
-            </select>
-          </div>
-
-          {filteredTasks.length === 0 ? (
-            <p className="muted">No tasks found.</p>
-          ) : (
-            <ul className="task-list">
-              {filteredTasks.map((task) => (
-                <li className="task-item" key={task.id} data-completed={task.completed}>
-                  <div>
-                    <label className="task-check">
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={() => handleToggleComplete(task)}
-                      />
-                      <span>{task.title}</span>
-                    </label>
-
-                    <div className="task-meta">
-                      {task.dueDate && (
-                        <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
-                      )}
-                      {task.application && (
-                        <span>
-                          {task.application.company?.name} - {task.application.roleTitle}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="comment-item__actions">
-                    <button type="button" onClick={() => handleDeleteTask(task.id)}>
-                      Delete
+              <div className="card">
+                {list.map((t) => (
+                  <div key={t.id} className="task-row">
+                    <TaskCheck
+                      checked={t.completed}
+                      onChange={() => handleToggle(t)}
+                    />
+                    <span
+                      style={{
+                        flex: 1,
+                        fontSize: 14,
+                        minWidth: 0,
+                        textDecoration: t.completed ? "line-through" : "none",
+                        color: t.completed ? "var(--faint)" : "inherit",
+                      }}
+                    >
+                      {t.title}
+                    </span>
+                    {t.application && (
+                      <button
+                        type="button"
+                        className="task-link"
+                        onClick={() => openApp(t.application.id)}
+                      >
+                        {t.application.company?.name || "Application"}
+                      </button>
+                    )}
+                    {t.dueDate && !t.completed && (
+                      <span
+                        className="mono-label"
+                        style={{
+                          fontSize: 10.5,
+                          color:
+                            daysUntil(t.dueDate) <= 0 ? dangerInk : "var(--faint)",
+                        }}
+                      >
+                        {relDay(t.dueDate)}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="icon-btn del"
+                      style={{ width: 28, height: 28 }}
+                      onClick={() => handleDelete(t.id)}
+                      aria-label="Delete task"
+                    >
+                      <Trash2 size={13} />
                     </button>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </section>
+                ))}
+              </div>
+            </section>
+          )
+      )}
+
+      {tasks.length === 0 && (
+        <div className="card">
+          <EmptyState
+            title="No tasks yet."
+            hint="Add follow-ups and prep work above."
+          />
+        </div>
+      )}
     </main>
   );
 }

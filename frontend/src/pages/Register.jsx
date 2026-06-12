@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import AuthShell from "../components/AuthShell";
 
 function Register() {
   const { register, isAuthenticated } = useAuth();
@@ -14,18 +15,9 @@ function Register() {
   const [error, setError] = useState("");
 
   const passwordRules = [
-    {
-      label: "More than 8 characters",
-      isValid: form.password.length > 8,
-    },
-    {
-      label: "At least one number",
-      isValid: /\d/.test(form.password),
-    },
-    {
-      label: "At least one capital letter",
-      isValid: /[A-Z]/.test(form.password),
-    },
+    { label: "More than 8 characters", isValid: form.password.length > 8 },
+    { label: "At least one number", isValid: /\d/.test(form.password) },
+    { label: "At least one capital letter", isValid: /[A-Z]/.test(form.password) },
     {
       label: "At least one special character",
       isValid: /[^A-Za-z0-9]/.test(form.password),
@@ -42,12 +34,10 @@ function Register() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-
     if (!canSubmit) {
       setError("Please complete all password requirements before registering.");
       return;
     }
-
     try {
       await register(form.name, form.email, form.password);
       navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
@@ -57,76 +47,91 @@ function Register() {
   };
 
   return (
-    <main className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>Create account</h1>
-        <p>Start tracking internships, deadlines, and interview progress.</p>
+    <AuthShell
+      tagline="Create your account to start tracking."
+      onSubmit={handleSubmit}
+      footer={
+        <>
+          Already have an account? <Link to="/login">Sign in</Link>
+        </>
+      }
+    >
+      <div className="field">
+        <label className="field-label">Name</label>
+        <input
+          className="input"
+          value={form.name}
+          placeholder="Maya Okafor"
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          required
+        />
+      </div>
+      <div className="field">
+        <label className="field-label">Email</label>
+        <input
+          className="input"
+          type="email"
+          value={form.email}
+          placeholder="you@school.edu"
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          required
+        />
+      </div>
+      <div className="field">
+        <label className="field-label">Password</label>
+        <input
+          className="input"
+          type="password"
+          value={form.password}
+          placeholder="••••••••"
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          required
+        />
+      </div>
 
-        {error && <div className="alert">{error}</div>}
+      <ul className="password-rules" aria-label="Password requirements">
+        {passwordRules.map((rule) => (
+          <li key={rule.label} data-valid={rule.isValid}>
+            <span aria-hidden="true">{rule.isValid ? "✓" : "○"}</span>
+            {rule.label}
+          </li>
+        ))}
+      </ul>
 
-        <label>
-          Name
-          <input
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-          />
-        </label>
+      <div className="field">
+        <label className="field-label">Confirm password</label>
+        <input
+          className="input"
+          type="password"
+          value={form.confirmPassword}
+          placeholder="••••••••"
+          onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+          required
+        />
+      </div>
 
-        <label>
-          Email
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </label>
-
-        <label>
-          Password
-          <input
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-          />
-        </label>
-
-        <ul className="password-rules" aria-label="Password requirements">
-          {passwordRules.map((rule) => (
-            <li key={rule.label} data-valid={rule.isValid}>
-              <span aria-hidden="true">{rule.isValid ? "✓" : "○"}</span>
-              {rule.label}
-            </li>
-          ))}
-        </ul>
-
-        <label>
-          Confirm password
-          <input
-            type="password"
-            value={form.confirmPassword}
-            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-            required
-          />
-        </label>
-
-        {form.confirmPassword && (
-          <p className={passwordsMatch ? "password-match" : "password-mismatch"}>
-            {passwordsMatch ? "✓ Passwords match" : "○ Passwords do not match"}
-          </p>
-        )}
-
-        <button type="submit" disabled={!canSubmit}>
-          Register
-        </button>
-
-        <span>
-          Already have an account? <Link to="/login">Login</Link>
+      {form.confirmPassword && (
+        <span
+          className="auth-err"
+          style={{
+            color: passwordsMatch ? "oklch(var(--st-l) 0.1 155)" : undefined,
+          }}
+        >
+          {passwordsMatch ? "✓ Passwords match" : "○ Passwords do not match"}
         </span>
-      </form>
-    </main>
+      )}
+
+      {error && <span className="auth-err">{error}</span>}
+
+      <button
+        type="submit"
+        className="btn btn-primary"
+        style={{ marginTop: 4 }}
+        disabled={!canSubmit}
+      >
+        Create account
+      </button>
+    </AuthShell>
   );
 }
 

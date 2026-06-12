@@ -1,101 +1,166 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { getApplications, updateApplicationStatus } from "../api/applicationApi";
-
-const statuses = [
-  "Saved",
-  "Applied",
-  "Online Assessment",
-  "Interview",
-  "Offer",
-  "Rejected",
-];
+import { useUI } from "../context/UIContext";
+import { STATUSES, STATUS_HUES } from "../utils/status";
+import { daysUntil, relDay } from "../utils/dates";
+import CompanyMark from "../components/CompanyMark";
+import PriorityMark from "../components/PriorityMark";
 
 function KanbanBoard() {
-  const [applications, setApplications] = useState([]);
-  const [error, setError] = useState("");
+  const { refreshKey, refresh, openApp, openNew } = useUI();
+  const [apps, setApps] = useState([]);
+  const [dragId, setDragId] = useState(null);
+  const [overCol, setOverCol] = useState(null);
 
   useEffect(() => {
-    const loadApplications = async () => {
-      try {
-        const res = await getApplications();
-        setApplications(res.data.applications);
-      } catch {
-        setError("Failed to load kanban board");
-      }
+    let cancelled = false;
+    const load = async () => {
+      const res = await getApplications();
+      if (!cancelled) setApps(res.data.applications || []);
     };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
 
-    loadApplications();
-  }, []);
+  const grouped = useMemo(() => {
+    const g = {};
+    STATUSES.forEach((s) => (g[s] = apps.filter((a) => a.status === s)));
+    return g;
+  }, [apps]);
 
-  const groupedApplications = useMemo(() => {
-    return statuses.reduce((groups, status) => {
-      groups[status] = applications.filter(
-        (application) => application.status === status
-      );
-      return groups;
-    }, {});
-  }, [applications]);
-
-  const handleMove = async (application, nextStatus) => {
+  const onDrop = async (status) => {
+    const id = dragId;
+    setDragId(null);
+    setOverCol(null);
+    if (id == null) return;
+    const app = apps.find((a) => a.id === id);
+    if (!app || app.status === status) return;
+    setApps((cur) =>
+      cur.map((a) => (a.id === id ? { ...a, status } : a))
+    );
     try {
-      const res = await updateApplicationStatus(application.id, nextStatus);
-
-      setApplications((current) =>
-        current.map((item) => (item.id === application.id ? res.data.application : item))
-      );
+      await updateApplicationStatus(id, status);
+      refresh();
     } catch {
-      setError("Failed to update application status");
+      refresh();
     }
   };
 
   return (
-    <main className="dashboard">
-      <Link to="/applications" className="back-link">
-        &lt; Back to applications
-      </Link>
+    <main className="page board-page">
+      <div style={{ maxWidth: 1240, margin: "0 auto" }}>
+        <header className="page-head">
+          <div>
+            <h1 className="page-title">Board</h1>
+            <p className="page-sub">
+              Drag applications between stages — status history is recorded.
+            </p>
+          </div>
+          <button className="btn btn-primary" onClick={openNew}>
+            <Plus size={14} /> Add application
+          </button>
+        </header>
+      </div>
 
-      <header className="dashboard-header">
-        <div>
-          <h1>Kanban Board</h1>
-          <p>Move applications through your internship pipeline.</p>
-        </div>
-      </header>
-
-      {error && <div className="alert">{error}</div>}
-
-      <section className="kanban-board">
-        {statuses.map((status) => (
-          <article className="kanban-column" key={status}>
-            <header>
+      <div className="board-rail">
+        {STATUSES.map((status) => (
+          <section
+            key={status}
+            className={"kb-col" + (overCol === status ? " over" : "")}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setOverCol(status);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget)) setOverCol(null);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              onDrop(status);
+            }}
+          >
+            <header className="kb-col-head">
+              <span
+                className="dot"
+                style={{
+                  background: `oklch(var(--st-l) var(--st-chroma) ${STATUS_HUES[status]})`,
+                }}
+              />
               <h2>{status}</h2>
-              <span>{groupedApplications[status]?.length || 0}</span>
+              <span className="count">{grouped[status].length}</span>
             </header>
-
-            <div className="kanban-list">
-              {groupedApplications[status]?.map((application) => (
-                <div className="kanban-card" key={application.id}>
-                  <strong>{application.roleTitle}</strong>
-                  <span>{application.company?.name}</span>
-
-                  <select
-                    value={application.status}
-                    onChange={(e) => handleMove(application, e.target.value)}
-                  >
-                    {statuses.map((option) => (
-                      <option key={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-
-              {groupedApplications[status]?.length === 0 && (
-                <p className="muted">No applications</p>
+            <div className="kb-list">
+              {grouped[status].length === 0 && (
+                <div className="kb-empty">Drop here</div>
               )}
+              {grouped[status].map((a) => (
+                <article
+                  key={a.id}
+                  className={"kb-card" + (dragId === a.id ? " dragging" : "")}
+                  draggable="true"
+                  onDragStart={(e) => {
+                    setDragId(a.id);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setOverCol(null);
+                  }}
+                  onClick={() => openApp(a.id)}
+                >
+                  <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
+                    <CompanyMark name={a.company?.name || "?"} size={26} />
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          fontSize: 13.5,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {a.company?.name || "—"}
+                      </div>
+                      <div
+                        style={{
+                          color: "var(--muted)",
+                          fontSize: 12,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {a.roleTitle}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="kb-card-foot">
+                    <PriorityMark priority={a.priority} />
+                    {a.deadline && (
+                      <span
+                        className="mono-label"
+                        style={{
+                          fontSize: 10,
+                          color:
+                            daysUntil(a.deadline) <= 2
+                              ? "oklch(var(--st-l) 0.12 22)"
+                              : "var(--faint)",
+                        }}
+                      >
+                        {relDay(a.deadline)}
+                      </span>
+                    )}
+                  </div>
+                </article>
+              ))}
             </div>
-          </article>
+          </section>
         ))}
-      </section>
+      </div>
     </main>
   );
 }

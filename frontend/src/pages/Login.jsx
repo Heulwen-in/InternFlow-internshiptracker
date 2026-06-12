@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import AuthShell from "../components/AuthShell";
 
 function Login() {
   const { login, isAuthenticated } = useAuth();
@@ -13,7 +14,6 @@ function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-
     try {
       await login(form.email, form.password);
       navigate("/dashboard");
@@ -23,44 +23,52 @@ function Login() {
   };
 
   return (
-    <main className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>Welcome back</h1>
-        <p>Sign in to manage your internship applications.</p>
+    <AuthShell
+      tagline="Welcome back. Your pipeline is waiting."
+      onSubmit={handleSubmit}
+      footer={
+        <>
+          New to InternFlow? <Link to="/register">Create account</Link>
+        </>
+      }
+    >
+      <div className="field">
+        <label className="field-label">Email</label>
+        <input
+          className="input"
+          type="email"
+          value={form.email}
+          placeholder="you@school.edu"
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          required
+        />
+      </div>
+      <div className="field">
+        <label className="field-label">Password</label>
+        <input
+          className="input"
+          type="password"
+          value={form.password}
+          placeholder="••••••••"
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          required
+        />
+      </div>
 
-        {error && <div className="alert">{error}</div>}
+      {error && <span className="auth-err">{error}</span>}
 
-        <label>
-          Email
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </label>
+      <button type="submit" className="btn btn-primary" style={{ marginTop: 4 }}>
+        Sign in
+      </button>
 
-        <label>
-          Password
-          <input
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-          />
-        </label>
-
-        <button type="submit">Login</button>
-
-        <span>
-          <Link to="/forgot-password">Forgot password?</Link>
-        </span>
-
-        <span>
-          No account yet? <Link to="/register">Create one</Link>
-        </span>
-      </form>
-    </main>
+      <Link
+        to="/forgot-password"
+        className="btn btn-ghost btn-sm"
+        style={{ alignSelf: "center", color: "var(--muted)" }}
+      >
+        Forgot password?
+      </Link>
+    </AuthShell>
   );
 }
 

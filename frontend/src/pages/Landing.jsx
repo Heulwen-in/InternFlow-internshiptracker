@@ -1,112 +1,146 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight, Moon, Sun } from "lucide-react";
 import { useAuth } from "../context/useAuth";
+import { useTheme } from "../context/ThemeContext";
+import StatusBadge from "../components/StatusBadge";
 
-const features = [
+const FEATURES = [
   {
-    title: "Track every application",
-    description: "Keep company, role, deadline, priority, and status in one tidy view.",
+    kicker: "01 — Pipeline",
+    title: "See every application at a glance",
+    body: "A table, cards, or a kanban board — your whole pipeline from Saved to Offer, however you like to scan it.",
   },
   {
-    title: "Plan your next action",
-    description:
-      "Use tasks, notes, interviews, and status history to reduce mental load.",
+    kicker: "02 — Momentum",
+    title: "Never miss what's next",
+    body: "Deadlines, interviews, and follow-up tasks surface themselves before they slip — not after.",
   },
   {
-    title: "Move with confidence",
-    description: "Kanban and dashboard summaries make progress visible at a glance.",
+    kicker: "03 — Memory",
+    title: "Context lives with the application",
+    body: "Notes, interview history, and status changes stay attached to each role, so prep never starts from zero.",
   },
 ];
 
 function Landing() {
   const { isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   return (
-    <main className="landing-page">
-      <nav className="landing-nav" aria-label="Primary navigation">
-        <Link to="/" className="brand-mark">
-          <span>IF</span>
-          InternFlow
-        </Link>
-
-        <div className="landing-nav__actions">
+    <div className="landing">
+      <header className="landing-nav">
+        <span className="wordmark">
+          Intern<b>Flow</b>
+        </span>
+        <div className="landing-nav-actions">
+          <button
+            className="icon-btn"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            type="button"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           {isAuthenticated ? (
-            <Link className="button-link" to="/dashboard">
-              Open Dashboard
-            </Link>
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate("/dashboard")}
+            >
+              Open dashboard
+            </button>
           ) : (
             <>
-              <Link className="button-link secondary" to="/login">
-                Login
-              </Link>
-              <Link className="button-link" to="/register">
-                Get Started
-              </Link>
+              <button className="btn btn-ghost" onClick={() => navigate("/login")}>
+                Sign in
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/register")}
+              >
+                Get started
+              </button>
             </>
           )}
         </div>
-      </nav>
+      </header>
 
       <section className="landing-hero">
-        <div className="landing-hero__copy">
-          <span className="eyebrow">Internship tracker for focused applicants</span>
-          <h1>Turn a messy internship search into a clear daily workflow.</h1>
-          <p>
-            InternFlow helps you organize applications, interviews, tasks, and follow-ups
-            without losing track of what matters next.
+        <div>
+          <div className="landing-kicker">Internship season, organized</div>
+          <h1 className="landing-h1">
+            Every application, interview &amp; follow-up — <em>in one place.</em>
+          </h1>
+          <p className="landing-sub">
+            InternFlow helps you organize applications, interviews, tasks, and
+            follow-ups without losing track of what matters next.
           </p>
-
-          <div className="landing-actions">
-            <Link className="button-link button-link--large" to="/register">
-              Start Tracking
-            </Link>
-            <Link className="button-link secondary button-link--large" to="/login">
-              I Already Have an Account
-            </Link>
+          <div className="landing-ctas">
+            <button
+              className="btn btn-primary btn-lg"
+              onClick={() => navigate("/register")}
+            >
+              Start tracking <ArrowRight size={15} />
+            </button>
+            <button
+              className="btn btn-ghost btn-lg"
+              onClick={() => navigate("/login")}
+            >
+              I have an account
+            </button>
           </div>
         </div>
 
-        <div className="landing-preview" aria-label="InternFlow dashboard preview">
-          <div className="preview-card preview-card--primary">
-            <span>Applications</span>
-            <strong>24</strong>
-            <small>6 interviews this month</small>
+        <div className="hero-card" aria-hidden="true">
+          <div className="mono-label" style={{ padding: "2px 10px 10px" }}>
+            This week
           </div>
-          <div className="preview-row">
-            <div className="preview-card">
-              <span>Next deadline</span>
-              <strong>Jun 12</strong>
+          <div className="hero-row">
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14.5 }}>
+                Linear Labs — SWE Intern
+              </div>
+              <div style={{ color: "var(--muted)", fontSize: 13 }}>
+                Pairing session · Mon 2:00 PM
+              </div>
             </div>
-            <div className="preview-card">
-              <span>Open tasks</span>
-              <strong>8</strong>
-            </div>
+            <StatusBadge status="Interview" />
           </div>
-          <div className="preview-list">
+          <div className="hero-row">
             <div>
-              <span>Saved</span>
-              <strong>Research company</strong>
+              <div style={{ fontWeight: 600, fontSize: 14.5 }}>
+                Northwind Capital — Data Science
+              </div>
+              <div style={{ color: "var(--muted)", fontSize: 13 }}>
+                OA window closes Sat
+              </div>
             </div>
+            <StatusBadge status="Online Assessment" />
+          </div>
+          <div className="hero-row">
             <div>
-              <span>Interview</span>
-              <strong>Prepare system design notes</strong>
+              <div style={{ fontWeight: 600, fontSize: 14.5 }}>
+                Ferry — Backend Intern
+              </div>
+              <div style={{ color: "var(--muted)", fontSize: 13 }}>
+                Offer decision due Jun 19
+              </div>
             </div>
-            <div>
-              <span>Offer</span>
-              <strong>Review compensation details</strong>
-            </div>
+            <StatusBadge status="Offer" />
           </div>
         </div>
       </section>
 
-      <section className="landing-features" aria-label="InternFlow features">
-        {features.map((feature) => (
-          <article key={feature.title}>
-            <h2>{feature.title}</h2>
-            <p>{feature.description}</p>
-          </article>
+      <section className="landing-feats">
+        {FEATURES.map((f) => (
+          <div className="feat" key={f.kicker}>
+            <span className="mono-label">{f.kicker}</span>
+            <h3>{f.title}</h3>
+            <p>{f.body}</p>
+          </div>
         ))}
       </section>
-    </main>
+    </div>
   );
 }
 

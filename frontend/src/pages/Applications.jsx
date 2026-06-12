@@ -1,233 +1,319 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
-  deleteApplication,
-  getApplications,
-  updateApplication,
-} from "../api/applicationApi";
+  Briefcase,
+  Grid2x2,
+  MapPin,
+  Plus,
+  Rows3,
+  Search,
+  X,
+} from "lucide-react";
+import { getApplications } from "../api/applicationApi";
+import { useUI } from "../context/UIContext";
+import { PRIORITIES, STATUSES, WORK_TYPES } from "../utils/status";
+import { daysUntil, fmtDate, relDay } from "../utils/dates";
+import StatusBadge from "../components/StatusBadge";
+import PriorityMark from "../components/PriorityMark";
+import CompanyMark from "../components/CompanyMark";
+import FilterSelect from "../components/FilterSelect";
+import EmptyState from "../components/EmptyState";
 
-const statuses = [
-  "Saved",
-  "Applied",
-  "Online Assessment",
-  "Interview",
-  "Offer",
-  "Rejected",
-];
-const priorities = ["Low", "Medium", "High"];
-const workTypes = ["Remote", "Hybrid", "On-site"];
+function deadlineColor(deadline) {
+  const d = daysUntil(deadline);
+  if (d === null) return "var(--faint)";
+  if (d <= 1) return "oklch(var(--st-l) 0.12 22)";
+  if (d <= 4) return "oklch(var(--st-l) 0.1 45)";
+  return "var(--muted)";
+}
 
 function Applications() {
-  const [applications, setApplications] = useState([]);
+  const { refreshKey, openApp, openNew } = useUI();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [apps, setApps] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState(
+    searchParams.get("status") || "All"
+  );
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [workTypeFilter, setWorkTypeFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [view, setView] = useState(
+    () => localStorage.getItem("internflow-apps-view") || "table"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("internflow-apps-view", view);
+  }, [view]);
 
   useEffect(() => {
     let cancelled = false;
-
-    const loadApplications = async () => {
+    const load = async () => {
       try {
         const res = await getApplications();
-        if (!cancelled) setApplications(res.data.applications);
-      } catch {
-        if (!cancelled) setError("Failed to load applications");
+        if (!cancelled) setApps(res.data.applications || []);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-
-    loadApplications();
-
+    load();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshKey]);
 
-  const filteredApplications = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return applications
-      .filter((application) => {
-        const companyName = application.company?.name?.toLowerCase() || "";
-        const roleTitle = application.roleTitle.toLowerCase();
-
-        const matchesSearch =
-          !normalizedSearch ||
-          companyName.includes(normalizedSearch) ||
-          roleTitle.includes(normalizedSearch);
-
-        const matchesStatus =
-          statusFilter === "All" || application.status === statusFilter;
-
-        const matchesPriority =
-          priorityFilter === "All" || application.priority === priorityFilter;
-
-        const matchesWorkType =
-          workTypeFilter === "All" || application.workType === workTypeFilter;
-
-        return matchesSearch && matchesStatus && matchesPriority && matchesWorkType;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return apps
+      .filter((a) => {
+        const company = a.company?.name?.toLowerCase() || "";
+        const role = a.roleTitle?.toLowerCase() || "";
+        const okQ = !q || company.includes(q) || role.includes(q);
+        const okS = statusFilter === "All" || a.status === statusFilter;
+        const okP = priorityFilter === "All" || a.priority === priorityFilter;
+        const okW = workTypeFilter === "All" || a.workType === workTypeFilter;
+        return okQ && okS && okP && okW;
       })
       .sort((a, b) => {
         if (sortBy === "deadline") {
-          const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-          const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-          return dateA - dateB;
+          const da = a.deadline ? new Date(a.deadline) : Infinity;
+          const db = b.deadline ? new Date(b.deadline) : Infinity;
+          return da - db;
         }
-
         if (sortBy === "priority") {
-          const order = { High: 1, Medium: 2, Low: 3 };
-          return (order[a.priority] || 4) - (order[b.priority] || 4);
+          const o = { High: 1, Medium: 2, Low: 3 };
+          return (o[a.priority] || 4) - (o[b.priority] || 4);
         }
-
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        if (sortBy === "company")
+          return (a.company?.name || "").localeCompare(b.company?.name || "");
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
       });
-  }, [applications, search, statusFilter, priorityFilter, workTypeFilter, sortBy]);
+  }, [apps, search, statusFilter, priorityFilter, workTypeFilter, sortBy]);
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this application?")) return;
+  const filterCount = [statusFilter, priorityFilter, workTypeFilter].filter(
+    (f) => f !== "All"
+  ).length;
 
-    await deleteApplication(id);
-    setApplications((current) => current.filter((app) => app.id !== id));
-  };
-
-  const handleStatusChange = async (application, status) => {
-    try {
-      const res = await updateApplication(application.id, { status });
-
-      setApplications((current) =>
-        current.map((item) => (item.id === application.id ? res.data.application : item))
-      );
-    } catch {
-      setError("Failed to update status");
+  const clearFilters = () => {
+    setStatusFilter("All");
+    setPriorityFilter("All");
+    setWorkTypeFilter("All");
+    if (searchParams.get("status")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("status");
+      setSearchParams(next, { replace: true });
     }
   };
 
+  const inMotion = apps.filter(
+    (a) => !["Rejected", "Offer"].includes(a.status)
+  ).length;
+
   return (
-    <main className="dashboard">
-      <Link to="/dashboard" className="back-link">
-        ← Back to dashboard
-      </Link>
-      <header className="dashboard-header">
+    <main className="page">
+      <header className="page-head">
         <div>
-          <h1>Applications</h1>
-          <p>Search, filter, and update your internship pipeline.</p>
+          <h1 className="page-title">Applications</h1>
+          <p className="page-sub">
+            {apps.length} total · {inMotion} in motion
+          </p>
         </div>
-        <div className="header-actions">
-          <Link className="button-link secondary" to="/applications/kanban">
-            View Kanban Board
-          </Link>
-          <Link className="button-link" to="/applications/new">
-            Add Application
-          </Link>
-        </div>
+        <button className="btn btn-primary" onClick={openNew}>
+          <Plus size={14} /> Add application
+        </button>
       </header>
 
-      <section className="filters">
-        <input
-          placeholder="Search company or role"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+      <div className="apps-toolbar">
+        <div className="apps-search">
+          <span className="search-icon">
+            <Search size={15} />
+          </span>
+          <input
+            className="input"
+            placeholder="Search company or role…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <FilterSelect
+          value={statusFilter}
+          onChange={setStatusFilter}
+          label="status"
+          options={STATUSES}
         />
-
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option>All</option>
-          {statuses.map((status) => (
-            <option key={status}>{status}</option>
-          ))}
-        </select>
-
-        <select
+        <FilterSelect
           value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
-        >
-          <option>All</option>
-          {priorities.map((priority) => (
-            <option key={priority}>{priority}</option>
-          ))}
-        </select>
-
-        <select
+          onChange={setPriorityFilter}
+          label="priority"
+          options={PRIORITIES}
+        />
+        <FilterSelect
           value={workTypeFilter}
-          onChange={(e) => setWorkTypeFilter(e.target.value)}
-        >
-          <option>All</option>
-          {workTypes.map((workType) => (
-            <option key={workType}>{workType}</option>
-          ))}
-        </select>
+          onChange={setWorkTypeFilter}
+          label="work type"
+          options={WORK_TYPES}
+        />
+        <FilterSelect
+          value={sortBy}
+          onChange={setSortBy}
+          label="sort"
+          noAll
+          options={[
+            ["newest", "Newest first"],
+            ["deadline", "By deadline"],
+            ["priority", "By priority"],
+            ["company", "By company"],
+          ]}
+        />
+        {filterCount > 0 && (
+          <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
+            <X size={12} /> Clear
+          </button>
+        )}
+        <div className="view-toggle">
+          <button
+            className={view === "table" ? "on" : ""}
+            onClick={() => setView("table")}
+          >
+            <Rows3 size={14} /> Table
+          </button>
+          <button
+            className={view === "cards" ? "on" : ""}
+            onClick={() => setView("cards")}
+          >
+            <Grid2x2 size={14} /> Cards
+          </button>
+        </div>
+      </div>
 
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          <option value="newest">Newest updated</option>
-          <option value="deadline">Closest deadline</option>
-          <option value="priority">Highest priority</option>
-        </select>
-      </section>
-
-      {error && <div className="alert">{error}</div>}
-      {isLoading && <p className="muted">Loading applications...</p>}
-
-      {!isLoading && (
-        <section className="table-card">
-          <table>
+      {loading ? (
+        <div className="card" style={{ padding: 24, color: "var(--muted)" }}>
+          Loading applications…
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            title="No applications match."
+            hint="Try clearing a filter, or add a new application."
+          />
+        </div>
+      ) : view === "table" ? (
+        <div className="card table-wrap">
+          <table className="apps">
             <thead>
               <tr>
-                <th>Company</th>
-                <th>Role</th>
+                <th>Company / Role</th>
                 <th>Status</th>
                 <th>Priority</th>
-                <th>Work Type</th>
+                <th>Work</th>
+                <th>Location</th>
+                <th>Applied</th>
                 <th>Deadline</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
-              {filteredApplications.map((application) => (
-                <tr key={application.id}>
-                  <td>{application.company?.name}</td>
-                  <td>{application.roleTitle}</td>
+              {filtered.map((a) => (
+                <tr key={a.id} onClick={() => openApp(a.id)}>
                   <td>
-                    <select
-                      value={application.status}
-                      onChange={(e) => handleStatusChange(application, e.target.value)}
-                    >
-                      {statuses.map((status) => (
-                        <option key={status}>{status}</option>
-                      ))}
-                    </select>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <CompanyMark name={a.company?.name || "?"} size={32} />
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>
+                          {a.company?.name || "—"}
+                        </div>
+                        <div style={{ color: "var(--muted)", fontSize: 12.5 }}>
+                          {a.roleTitle}
+                        </div>
+                      </div>
+                    </div>
                   </td>
-                  <td>{application.priority || "None"}</td>
-                  <td>{application.workType || "None"}</td>
                   <td>
-                    {application.deadline
-                      ? new Date(application.deadline).toLocaleDateString()
-                      : "No deadline"}
+                    <StatusBadge status={a.status} />
                   </td>
-                  <td className="table-actions">
-                    <Link to={`/applications/${application.id}/edit`}>Edit</Link>
-                    <button
-                      type="button"
-                      className="button-danger"
-                      onClick={() => handleDelete(application.id)}
-                    >
-                      Delete
-                    </button>
+                  <td>
+                    <PriorityMark priority={a.priority} />
+                  </td>
+                  <td style={{ color: "var(--ink-2)", fontSize: 13 }}>
+                    {a.workType || "—"}
+                  </td>
+                  <td style={{ color: "var(--ink-2)", fontSize: 13 }}>
+                    {a.location || "—"}
+                  </td>
+                  <td className="deadline-chip" style={{ color: "var(--muted)" }}>
+                    {a.appliedDate ? fmtDate(a.appliedDate) : "—"}
+                  </td>
+                  <td
+                    className="deadline-chip"
+                    style={{ color: deadlineColor(a.deadline) }}
+                  >
+                    {a.deadline ? relDay(a.deadline) : "—"}
                   </td>
                 </tr>
               ))}
-
-              {filteredApplications.length === 0 && (
-                <tr>
-                  <td colSpan="7">No applications match your filters.</td>
-                </tr>
-              )}
             </tbody>
           </table>
-        </section>
+        </div>
+      ) : (
+        <div className="app-cards">
+          {filtered.map((a) => (
+            <article
+              key={a.id}
+              className="card app-card"
+              onClick={() => openApp(a.id)}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <CompanyMark name={a.company?.name || "?"} size={38} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 15 }}>
+                    {a.company?.name || "—"}
+                  </div>
+                  <div style={{ color: "var(--muted)", fontSize: 13 }}>
+                    {a.roleTitle}
+                  </div>
+                </div>
+                <PriorityMark priority={a.priority} />
+              </div>
+              <div className="app-card-meta">
+                {a.location && (
+                  <span>
+                    <MapPin size={12} />
+                    {a.location}
+                  </span>
+                )}
+                {a.workType && (
+                  <span>
+                    <Briefcase size={12} />
+                    {a.workType}
+                  </span>
+                )}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderTop: "1px solid var(--line)",
+                  paddingTop: 12,
+                  marginTop: "auto",
+                }}
+              >
+                <StatusBadge status={a.status} />
+                <span
+                  className="deadline-chip"
+                  style={{ color: deadlineColor(a.deadline) }}
+                >
+                  {a.deadline
+                    ? `due ${relDay(a.deadline)}`
+                    : a.appliedDate
+                    ? `applied ${fmtDate(a.appliedDate)}`
+                    : "not applied"}
+                </span>
+              </div>
+            </article>
+          ))}
+        </div>
       )}
     </main>
   );

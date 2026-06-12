@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/axios";
+import AuthShell from "../components/AuthShell";
 
 function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -15,14 +16,12 @@ function ResetPassword() {
     const validateToken = async () => {
       setIsCheckingLink(true);
       setError("");
-
       if (!token) {
         setIsLinkExpired(true);
         setError("This link has been expired");
         setIsCheckingLink(false);
         return;
       }
-
       try {
         await api.post("/auth/validate-reset-token", { token });
         setIsLinkExpired(false);
@@ -33,7 +32,6 @@ function ResetPassword() {
         setIsCheckingLink(false);
       }
     };
-
     validateToken();
   }, [token]);
 
@@ -41,7 +39,6 @@ function ResetPassword() {
     event.preventDefault();
     setError("");
     setMessage("");
-
     try {
       const res = await api.post("/auth/reset-password", { token, password });
       setMessage(res.data.message);
@@ -53,36 +50,47 @@ function ResetPassword() {
   };
 
   return (
-    <main className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>Choose new password</h1>
-        <p>Your reset link expires after 5 minutes.</p>
-
-        {error && <div className="alert">{error}</div>}
-        {message && <div className="notice">{message}</div>}
-        {isCheckingLink && <p className="muted">Checking reset link...</p>}
-
-        <label>
-          New password
-          <input
-            type="password"
-            minLength="8"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={isCheckingLink || isLinkExpired}
-          />
-        </label>
-
-        <button type="submit" disabled={isCheckingLink || isLinkExpired}>
-          Reset Password
-        </button>
-
-        <span>
-          Back to <Link to="/login">login</Link>
+    <AuthShell
+      tagline="Your reset link expires after 5 minutes."
+      onSubmit={handleSubmit}
+      footer={
+        <>
+          Back to <Link to="/login">sign in</Link>
+        </>
+      }
+    >
+      {message && <div className="auth-note">{message}</div>}
+      {isCheckingLink && (
+        <span style={{ color: "var(--muted)", fontSize: 13 }}>
+          Checking reset link…
         </span>
-      </form>
-    </main>
+      )}
+
+      <div className="field">
+        <label className="field-label">New password</label>
+        <input
+          className="input"
+          type="password"
+          minLength="8"
+          value={password}
+          placeholder="••••••••"
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          disabled={isCheckingLink || isLinkExpired}
+        />
+      </div>
+
+      {error && <span className="auth-err">{error}</span>}
+
+      <button
+        type="submit"
+        className="btn btn-primary"
+        style={{ marginTop: 4 }}
+        disabled={isCheckingLink || isLinkExpired}
+      >
+        Reset password
+      </button>
+    </AuthShell>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
+import AuthShell from "../components/AuthShell";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -11,7 +12,6 @@ function ForgotPassword() {
     event.preventDefault();
     setError("");
     setMessage("");
-
     try {
       const res = await api.post("/auth/forgot-password", { email });
       setMessage(res.data.message);
@@ -21,31 +21,35 @@ function ForgotPassword() {
   };
 
   return (
-    <main className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>Reset password</h1>
-        <p>Enter your account email and we will send a reset link.</p>
+    <AuthShell
+      tagline="Enter your account email and we'll send a reset link."
+      onSubmit={handleSubmit}
+      footer={
+        <>
+          Remembered it? <Link to="/login">Back to sign in</Link>
+        </>
+      }
+    >
+      {message && <div className="auth-note">{message}</div>}
 
-        {error && <div className="alert">{error}</div>}
-        {message && <div className="notice">{message}</div>}
+      <div className="field">
+        <label className="field-label">Email</label>
+        <input
+          className="input"
+          type="email"
+          value={email}
+          placeholder="you@school.edu"
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
 
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
+      {error && <span className="auth-err">{error}</span>}
 
-        <button type="submit">Send Reset Link</button>
-
-        <span>
-          Remembered it? <Link to="/login">Back to login</Link>
-        </span>
-      </form>
-    </main>
+      <button type="submit" className="btn btn-primary" style={{ marginTop: 4 }}>
+        Send reset link
+      </button>
+    </AuthShell>
   );
 }
 

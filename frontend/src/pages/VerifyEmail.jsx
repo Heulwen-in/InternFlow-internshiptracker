@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import AuthShell from "../components/AuthShell";
 
 function VerifyEmail() {
   const { verifyEmail, resendVerification, isAuthenticated } = useAuth();
@@ -15,13 +16,11 @@ function VerifyEmail() {
   useEffect(() => {
     const linkEmail = searchParams.get("email");
     const linkOtp = searchParams.get("otp");
-
     if (!linkEmail || !linkOtp) return;
 
     const verifyLink = async () => {
       setIsVerifyingLink(true);
       setError("");
-
       try {
         await verifyEmail(linkEmail, linkOtp);
         navigate("/dashboard");
@@ -31,7 +30,6 @@ function VerifyEmail() {
         setIsVerifyingLink(false);
       }
     };
-
     verifyLink();
   }, [navigate, searchParams, verifyEmail]);
 
@@ -40,7 +38,6 @@ function VerifyEmail() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-
     try {
       await verifyEmail(email, otp);
       navigate("/dashboard");
@@ -51,7 +48,6 @@ function VerifyEmail() {
 
   const handleResend = async () => {
     setError("");
-
     try {
       const res = await resendVerification(email);
       setMessage(res.message || "Verification code sent");
@@ -61,47 +57,55 @@ function VerifyEmail() {
   };
 
   return (
-    <main className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>Verify email</h1>
-        <p>{message}</p>
+    <AuthShell
+      tagline="Verify your email to finish signing up."
+      onSubmit={handleSubmit}
+      footer={
+        <>
+          Already verified? <Link to="/login">Sign in</Link>
+        </>
+      }
+    >
+      {message && <div className="auth-note">{message}</div>}
 
-        {error && <div className="alert">{error}</div>}
+      <div className="field">
+        <label className="field-label">Email</label>
+        <input
+          className="input"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="field">
+        <label className="field-label">Verification code</label>
+        <input
+          className="input"
+          inputMode="numeric"
+          maxLength="6"
+          value={otp}
+          placeholder="000000"
+          onChange={(e) => setOtp(e.target.value)}
+          required
+        />
+      </div>
 
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
+      {error && <span className="auth-err">{error}</span>}
 
-        <label>
-          Verification code
-          <input
-            inputMode="numeric"
-            maxLength="6"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            required
-          />
-        </label>
+      <button type="submit" className="btn btn-primary" disabled={isVerifyingLink}>
+        {isVerifyingLink ? "Checking link…" : "Verify account"}
+      </button>
 
-        <button type="submit" disabled={isVerifyingLink}>
-          {isVerifyingLink ? "Checking Link..." : "Verify Account"}
-        </button>
-
-        <button type="button" className="button-ghost" onClick={handleResend}>
-          Resend Code
-        </button>
-
-        <span>
-          Already verified? <Link to="/login">Login</Link>
-        </span>
-      </form>
-    </main>
+      <button
+        type="button"
+        className="btn btn-ghost btn-sm"
+        style={{ alignSelf: "center", color: "var(--muted)" }}
+        onClick={handleResend}
+      >
+        Resend code
+      </button>
+    </AuthShell>
   );
 }
 
