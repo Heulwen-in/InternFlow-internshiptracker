@@ -5,7 +5,11 @@ function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <main className="dashboard">Loading...</main>;
+    return (
+      <main className="page" style={{ color: "var(--muted)" }}>
+        Loading…
+      </main>
+    );
   }
 
   if (!isAuthenticated) {
