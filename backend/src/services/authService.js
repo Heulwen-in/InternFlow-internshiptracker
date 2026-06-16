@@ -74,28 +74,80 @@ function assertStrongPassword(password) {
   }
 }
 
+const MAIL = {
+  bg: "#f9f5f0",
+  surface: "#fefcf9",
+  surface2: "#f6f2eb",
+  ink: "#241e19",
+  ink2: "#564b42",
+  muted: "#7e7267",
+  faint: "#a0978d",
+  line: "#e2dbd2",
+  lineStrong: "#cbc3b8",
+  accent: "#a94608",
+  accentInk: "#fdf9f7",
+  fontDisplay: "'Newsreader', Georgia, 'Times New Roman', serif",
+  fontUi: "'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif",
+  fontMono: "'Spline Sans Mono', 'SF Mono', Consolas, monospace",
+};
+
 function buildOtpBoxes(otp) {
-  return otp
+  const cells = otp
     .split("")
     .map(
       (digit) => `
-        <span style="
-          display: inline-block;
-          width: 46px;
-          height: 52px;
-          line-height: 52px;
-          margin-right: 10px;
-          border: 1px solid #93a4c7;
-          border-radius: 8px;
-          color: #3158b7;
-          font-size: 28px;
-          font-weight: 700;
-          text-align: center;
-          background: #ffffff;
-        ">${digit}</span>
+        <td style="padding: 0 4px;">
+          <div style="width: 42px; height: 54px; line-height: 54px; border: 1px solid ${MAIL.lineStrong}; border-radius: 8px; background: ${MAIL.surface}; color: ${MAIL.ink}; font-family: ${MAIL.fontMono}; font-size: 24px; font-weight: 600; text-align: center;">${digit}</div>
+        </td>
       `
     )
     .join("");
+  return `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin: 0 auto;"><tr>${cells}</tr></table>`;
+}
+
+function buildEmailShell({ kicker, heading, bodyRows }) {
+  return `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400..600;1,400..600&family=Schibsted+Grotesk:wght@400..700&family=Spline+Sans+Mono:wght@400..600&display=swap" rel="stylesheet" />
+        </head>
+        <body style="margin: 0; padding: 0; background: ${MAIL.bg}; font-family: ${MAIL.fontUi}; color: ${MAIL.ink2};">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: ${MAIL.bg}; padding: 40px 16px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background: ${MAIL.surface}; border: 1px solid ${MAIL.line}; border-radius: 14px; overflow: hidden;">
+                  <tr>
+                    <td style="padding: 30px 40px 0;">
+                      <span style="font-family: ${MAIL.fontDisplay}; font-style: italic; font-size: 24px; font-weight: 500; color: ${MAIL.ink}; letter-spacing: -0.01em;">Intern<span style="color: ${MAIL.accent};">Flow</span></span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 22px 40px 0;">
+                      <div style="border-top: 1px solid ${MAIL.line}; font-size: 0; line-height: 0;">&nbsp;</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 28px 40px 6px;">
+                      <p style="margin: 0 0 16px; font-family: ${MAIL.fontMono}; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: ${MAIL.accent}; font-weight: 600;">${kicker}</p>
+                      <h1 style="margin: 0; font-family: ${MAIL.fontDisplay}; font-size: 30px; line-height: 1.15; font-weight: 500; letter-spacing: -0.015em; color: ${MAIL.ink};">${heading}</h1>
+                    </td>
+                  </tr>
+                  ${bodyRows}
+                  <tr>
+                    <td style="padding: 22px 40px 28px; border-top: 1px solid ${MAIL.line}; background: ${MAIL.surface2};">
+                      <p style="margin: 0; font-family: ${MAIL.fontMono}; font-size: 10.5px; letter-spacing: 0.06em; color: ${MAIL.faint}; line-height: 1.7;">INTERNFLOW &middot; INTERNSHIP SEASON, ORGANIZED<br/>Automated message — please do not reply to this email.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+  `;
 }
 
 async function sendVerificationOtpEmail(user, otp) {
@@ -107,62 +159,32 @@ async function sendVerificationOtpEmail(user, otp) {
     to: user.email,
     subject: "Verify your InternFlow email",
     text: `Your InternFlow verification code is ${otp}. It expires in ${OTP_TTL_MINUTES} minutes.`,
-    html: `
-      <!doctype html>
-      <html>
-        <body style="margin: 0; padding: 0; background: #eef4ff; font-family: Arial, Helvetica, sans-serif; color: #334155;">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #eef4ff; padding: 32px 16px;">
-            <tr>
-              <td align="center">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 720px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(49, 88, 183, 0.14);">
+    html: buildEmailShell({
+      kicker: "Verify your email",
+      heading: "Confirm your<br/>email address",
+      bodyRows: `
                   <tr>
-                    <td align="center" style="padding: 28px 24px 22px;">
-                      <div style="display: inline-block; width: 40px; height: 40px; line-height: 40px; margin-right: 10px; border-radius: 10px; background: #3158d4; color: #ffffff; font-weight: 800; text-align: center;">
-                        IF
-                      </div>
-                      <span style="vertical-align: middle; color: #3158b7; font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">
-                        InternFlow
-                      </span>
+                    <td style="padding: 18px 40px 0;">
+                      <p style="margin: 0 0 6px; font-family: ${MAIL.fontUi}; font-size: 15px; line-height: 1.65; color: ${MAIL.ink2};">Hello ${user.name},</p>
+                      <p style="margin: 0 0 26px; font-family: ${MAIL.fontUi}; font-size: 15px; line-height: 1.65; color: ${MAIL.ink2};">Enter the verification code below to finish setting up your InternFlow account.</p>
                     </td>
                   </tr>
                   <tr>
-                    <td align="center" style="background: #3158d4; padding: 52px 24px;">
-                      <div style="width: 160px; margin: 0 auto 24px; border-top: 2px solid rgba(255,255,255,0.65);">
-                        <span style="display: inline-block; margin-top: -13px; padding: 0 14px; background: #3158d4; color: #ffffff; font-size: 20px;">✉</span>
-                      </div>
-                      <p style="margin: 0 0 14px; color: rgba(255,255,255,0.82); font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase;">
-                        Thanks for signing up!
-                      </p>
-                      <h1 style="margin: 0; color: #ffffff; font-size: 34px; line-height: 1.2; font-weight: 800;">
-                        Verify Your Email Address
-                      </h1>
+                    <td align="center" style="padding: 0 20px 24px;">
+                      ${buildOtpBoxes(otp)}
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding: 38px 44px 44px;">
-                      <p style="margin: 0 0 22px; font-size: 18px;">Hello ${user.name},</p>
-                      <p style="margin: 0 0 24px; font-size: 17px; line-height: 1.7;">
-                        Your verification code for InternFlow is:
-                      </p>
-                      <div style="margin: 0 0 26px; white-space: nowrap;">
-                        ${buildOtpBoxes(otp)}
-                      </div>
-                      <p style="margin: 0 0 28px; font-size: 16px; line-height: 1.7;">
-                        This passcode will only be valid for the next <strong>${OTP_TTL_MINUTES} minutes</strong>.
-                        If you did not request a verification code, please ignore this email.
-                      </p>
-                      <a href="${verifyUrl}" style="display: inline-block; padding: 14px 24px; border-radius: 8px; background: #f05a28; color: #ffffff; font-size: 16px; font-weight: 800; text-decoration: none;">
-                        Verify Email
-                      </a>
+                    <td style="padding: 0 40px 26px;">
+                      <p style="margin: 0; font-family: ${MAIL.fontUi}; font-size: 14px; line-height: 1.65; color: ${MAIL.muted};">This code is valid for the next <strong style="color: ${MAIL.ink2};">${OTP_TTL_MINUTES} minutes</strong>. If you didn't create an account, you can safely ignore this email.</p>
                     </td>
                   </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-      </html>
-    `,
+                  <tr>
+                    <td style="padding: 0 40px 32px;">
+                      <a href="${verifyUrl}" style="display: inline-block; padding: 13px 26px; border-radius: 8px; background: ${MAIL.accent}; color: ${MAIL.accentInk}; font-size: 14px; font-weight: 600; text-decoration: none; font-family: ${MAIL.fontUi};">Verify email</a>
+                    </td>
+                  </tr>`,
+    }),
   });
 }
 
@@ -173,59 +195,27 @@ async function sendPasswordResetEmail(email, token) {
     to: email,
     subject: "Reset your InternFlow password",
     text: `Reset your InternFlow password here: ${resetUrl}. This link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.`,
-    html: `
-      <!doctype html>
-      <html>
-        <body style="margin: 0; padding: 0; background: #eef4ff; font-family: Arial, Helvetica, sans-serif; color: #334155;">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #eef4ff; padding: 32px 16px;">
-            <tr>
-              <td align="center">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 720px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(49, 88, 183, 0.14);">
+    html: buildEmailShell({
+      kicker: "Reset password",
+      heading: "Reset your<br/>password",
+      bodyRows: `
                   <tr>
-                    <td align="center" style="padding: 28px 24px 22px;">
-                      <div style="display: inline-block; width: 40px; height: 40px; line-height: 40px; margin-right: 10px; border-radius: 10px; background: #3158d4; color: #ffffff; font-weight: 800; text-align: center;">
-                        IF
-                      </div>
-                      <span style="vertical-align: middle; color: #3158b7; font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">
-                        InternFlow
-                      </span>
+                    <td style="padding: 18px 40px 0;">
+                      <p style="margin: 0 0 6px; font-family: ${MAIL.fontUi}; font-size: 15px; line-height: 1.65; color: ${MAIL.ink2};">Hello,</p>
+                      <p style="margin: 0 0 26px; font-family: ${MAIL.fontUi}; font-size: 15px; line-height: 1.65; color: ${MAIL.ink2};">We received a request to reset your InternFlow password. Use the button below to choose a new one. For your security, this link can only be used once.</p>
                     </td>
                   </tr>
                   <tr>
-                    <td align="center" style="background: #3158d4; padding: 52px 24px;">
-                      <div style="width: 160px; margin: 0 auto 24px; border-top: 2px solid rgba(255,255,255,0.65);">
-                        <span style="display: inline-block; margin-top: -13px; padding: 0 14px; background: #3158d4; color: #ffffff; font-size: 20px;">🔒</span>
-                      </div>
-                      <p style="margin: 0 0 14px; color: rgba(255,255,255,0.82); font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase;">
-                        Password reset request
-                      </p>
-                      <h1 style="margin: 0; color: #ffffff; font-size: 34px; line-height: 1.2; font-weight: 800;">
-                        Reset Your Password
-                      </h1>
+                    <td style="padding: 0 40px 26px;">
+                      <a href="${resetUrl}" style="display: inline-block; padding: 13px 26px; border-radius: 8px; background: ${MAIL.accent}; color: ${MAIL.accentInk}; font-size: 14px; font-weight: 600; text-decoration: none; font-family: ${MAIL.fontUi};">Reset password</a>
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding: 38px 44px 44px;">
-                      <p style="margin: 0 0 22px; font-size: 18px;">Hello,</p>
-                      <p style="margin: 0 0 24px; font-size: 17px; line-height: 1.7;">
-                        We received a request to reset your InternFlow password. Use the secure button below to choose a new password.
-                      </p>
-                      <p style="margin: 0 0 28px; font-size: 16px; line-height: 1.7;">
-                        This reset link will only be valid for the next <strong>${PASSWORD_RESET_TTL_MINUTES} minutes</strong>.
-                        If you did not request this reset, please ignore this email.
-                      </p>
-                      <a href="${resetUrl}" style="display: inline-block; padding: 14px 24px; border-radius: 8px; background: #f05a28; color: #ffffff; font-size: 16px; font-weight: 800; text-decoration: none;">
-                        Reset Password
-                      </a>
+                    <td style="padding: 0 40px 32px;">
+                      <p style="margin: 0; font-family: ${MAIL.fontUi}; font-size: 14px; line-height: 1.65; color: ${MAIL.muted};">This reset link is valid for the next <strong style="color: ${MAIL.ink2};">${PASSWORD_RESET_TTL_MINUTES} minutes</strong>. If you didn't request a reset, you can safely ignore this email — your password won't change.</p>
                     </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-      </html>
-    `,
+                  </tr>`,
+    }),
   });
 }
 
