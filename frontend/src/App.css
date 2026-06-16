@@ -1072,3 +1072,184 @@
 .password-rules li span {
   font-family: var(--font-mono);
 }
+
+/* ---------- Focused auth flows (verify / reset) ---------- */
+.flow-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.flow-wordmark {
+  font-size: 24px;
+  justify-content: center;
+  margin-bottom: 22px;
+  display: inline-flex;
+}
+
+.flow-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.flow-kicker::before,
+.flow-kicker::after {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+.flow-heading {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.12;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  text-align: center;
+  margin: 16px 0 0;
+}
+
+.flow-heading em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.flow-sub {
+  color: var(--ink-2);
+  font-size: 14.5px;
+  line-height: 1.6;
+  text-align: center;
+  margin: 12px auto 0;
+  max-width: 340px;
+  text-wrap: pretty;
+}
+
+.flow-sub b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.flow-body {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.flow-err {
+  color: oklch(0.5 0.14 22);
+  font-size: 12.5px;
+}
+
+.flow-hint {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.flow-note {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 18px;
+}
+
+.flow-note button {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 0 3px;
+  cursor: pointer;
+}
+
+.flow-note button:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+/* OTP */
+.otp-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.otp-box {
+  width: 48px;
+  height: 60px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -moz-appearance: textfield;
+}
+
+.otp-box::-webkit-outer-spin-button,
+.otp-box::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.otp-box:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.otp-box.filled {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+@media (max-width: 460px) {
+  .otp-box {
+    width: 42px;
+    height: 54px;
+    font-size: 22px;
+  }
+  .otp-row {
+    gap: 7px;
+  }
+}
+
+/* success / sent seal */
+.flow-seal {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.strength-meter {
+  display: flex;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.strength-meter span {
+  height: 3px;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
