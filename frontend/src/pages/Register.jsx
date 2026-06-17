@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import AuthShell from "../components/AuthShell";
+import PasswordInput from "../components/PasswordInput";
 
 function Register() {
   const { register, isAuthenticated } = useAuth();
@@ -79,9 +80,7 @@ function Register() {
       </div>
       <div className="field">
         <label className="field-label">Password</label>
-        <input
-          className="input"
-          type="password"
+        <PasswordInput
           value={form.password}
           placeholder="••••••••"
           onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -100,9 +99,7 @@ function Register() {
 
       <div className="field">
         <label className="field-label">Confirm password</label>
-        <input
-          className="input"
-          type="password"
+        <PasswordInput
           value={form.confirmPassword}
           placeholder="••••••••"
           onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}

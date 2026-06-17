@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import AuthShell from "../components/AuthShell";
+import PasswordInput from "../components/PasswordInput";
 
 function Login() {
   const { login, isAuthenticated } = useAuth();
@@ -45,9 +46,7 @@ function Login() {
       </div>
       <div className="field">
         <label className="field-label">Password</label>
-        <input
-          className="input"
-          type="password"
+        <PasswordInput
           value={form.password}
           placeholder="••••••••"
           onChange={(e) => setForm({ ...form, password: e.target.value })}
