@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import api from "../api/axios";
 import AuthFlowShell from "./AuthFlowShell";
+import PasswordInput from "./PasswordInput";
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
@@ -242,9 +243,7 @@ function ResetPasswordFlow({ initialStage = "request", token = "" }) {
         >
           <div className="field">
             <label className="field-label">New password</label>
-            <input
-              className="input"
-              type="password"
+            <PasswordInput
               value={pw}
               placeholder="••••••••"
               autoFocus
@@ -273,9 +272,7 @@ function ResetPasswordFlow({ initialStage = "request", token = "" }) {
           </div>
           <div className="field">
             <label className="field-label">Confirm password</label>
-            <input
-              className="input"
-              type="password"
+            <PasswordInput
               value={pw2}
               placeholder="••••••••"
               onChange={(e) => setPw2(e.target.value)}
