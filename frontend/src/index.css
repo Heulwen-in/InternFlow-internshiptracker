@@ -260,6 +260,27 @@ textarea {
   color: var(--ink-2);
 }
 
+.password-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrap .input {
+  padding-right: 42px;
+}
+
+.password-input-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--faint);
+}
+
+.password-input-toggle:hover {
+  color: var(--ink);
+}
+
 /* status badge */
 .status-badge {
   display: inline-flex;
