@@ -31,6 +31,14 @@ function normalizeEmail(email) {
   return email.trim().toLowerCase();
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function hashSecret(value) {
   return crypto.createHash("sha256").update(`${value}.${env.jwtSecret}`).digest("hex");
 }
@@ -165,7 +173,7 @@ async function sendVerificationOtpEmail(user, otp) {
       bodyRows: `
                   <tr>
                     <td style="padding: 18px 40px 0;">
-                      <p style="margin: 0 0 6px; font-family: ${MAIL.fontUi}; font-size: 15px; line-height: 1.65; color: ${MAIL.ink2};">Hello ${user.name},</p>
+                      <p style="margin: 0 0 6px; font-family: ${MAIL.fontUi}; font-size: 15px; line-height: 1.65; color: ${MAIL.ink2};">Hello ${escapeHtml(user.name)},</p>
                       <p style="margin: 0 0 26px; font-family: ${MAIL.fontUi}; font-size: 15px; line-height: 1.65; color: ${MAIL.ink2};">Enter the verification code below to finish setting up your InternFlow account.</p>
                     </td>
                   </tr>
@@ -223,6 +231,8 @@ async function register({ name, email, password }) {
   if (!name || !email || !password) {
     throw new HttpError(400, "name, email and password are required");
   }
+  if (name.trim().length > 100) throw new HttpError(400, "Name must be 100 characters or fewer");
+  if (email.length > 254) throw new HttpError(400, "Email address is too long");
   assertStrongPassword(password);
 
   const normalizedEmail = normalizeEmail(email);
@@ -333,12 +343,8 @@ async function resendVerification({ email }) {
     where: { email: normalizeEmail(email) },
   });
 
-  if (!user) {
-    throw new HttpError(404, "Account not found");
-  }
-
-  if (user.emailVerified) {
-    throw new HttpError(400, "Email is already verified");
+  if (!user || user.emailVerified) {
+    return { message: "Verification code sent" };
   }
 
   const otp = generateOtp();
