@@ -6,10 +6,12 @@ const applicationRoutes = require("./routes/applicationRoutes");
 const noteRoutes = require("./routes/noteRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const interviewRoutes = require("./routes/interviewRoutes");
-
+const cors = require("cors");
+const env = require("./config/env");
+const { notFound, errorHandler } = require("./middleware/errorHandler");
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: env.corsOrigin }));
 app.use(express.json());
 
 app.get("/health", (req, res) => {
@@ -22,5 +24,7 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api", noteRoutes);
 app.use("/api", taskRoutes);
 app.use("/api", interviewRoutes);
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;
