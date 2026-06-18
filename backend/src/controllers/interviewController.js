@@ -1,9 +1,5 @@
 const prisma = require("../config/prisma");
-
-const toDate = (value) => {
-  if (!value) return null;
-  return new Date(value);
-};
+const { toDate } = require("../utils/date");
 
 const getInterviews = async (req, res) => {
   try {

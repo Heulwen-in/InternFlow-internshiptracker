@@ -1,10 +1,5 @@
 const prisma = require("../config/prisma");
-
-const toDate = (value) => {
-  if (value === undefined) return undefined;
-  if (!value) return null;
-  return new Date(value);
-};
+const { toDate } = require("../utils/date");
 
 const getApplications = async (req, res) => {
   try {
@@ -62,9 +57,13 @@ const createApplication = async (req, res) => {
     } = req.body;
 
     if (!companyId || !roleTitle) {
-      return res.status(400).json({
-        message: "Company and role title are required",
-      });
+      return res.status(400).json({ message: "Company and role title are required" });
+    }
+    if (roleTitle.length > 200) {
+      return res.status(400).json({ message: "Role title must be 200 characters or fewer" });
+    }
+    if (jobUrl && jobUrl.length > 2048) {
+      return res.status(400).json({ message: "Job URL is too long" });
     }
 
     const company = await prisma.company.findFirst({

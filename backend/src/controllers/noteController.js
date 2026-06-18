@@ -32,6 +32,9 @@ const createNote = async (req, res) => {
     if (!content) {
       return res.status(400).json({ message: "Note content is required" });
     }
+    if (content.length > 10000) {
+      return res.status(400).json({ message: "Note content must be 10,000 characters or fewer" });
+    }
 
     const application = await prisma.application.findFirst({
       where: { id: applicationId, userId: req.user.id },

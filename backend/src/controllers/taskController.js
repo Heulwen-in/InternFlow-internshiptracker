@@ -1,10 +1,5 @@
 const prisma = require("../config/prisma");
-
-const toDate = (value) => {
-  if (value === undefined) return undefined;
-  if (!value) return null;
-  return new Date(value);
-};
+const { toDate } = require("../utils/date");
 
 const getTasks = async (req, res) => {
   try {
@@ -30,6 +25,9 @@ const createTask = async (req, res) => {
 
     if (!title) {
       return res.status(400).json({ message: "Task title is required" });
+    }
+    if (title.length > 500) {
+      return res.status(400).json({ message: "Task title must be 500 characters or fewer" });
     }
 
     let nextApplicationId = null;

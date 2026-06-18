@@ -47,6 +47,12 @@ const createCompany = async (req, res) => {
     if (!name) {
       return res.status(400).json({ message: "Company name is required" });
     }
+    if (name.length > 200) {
+      return res.status(400).json({ message: "Company name must be 200 characters or fewer" });
+    }
+    if (website && website.length > 2048) {
+      return res.status(400).json({ message: "Website URL is too long" });
+    }
 
     const company = await prisma.company.create({
       data: {
