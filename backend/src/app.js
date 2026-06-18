@@ -6,7 +6,6 @@ const applicationRoutes = require("./routes/applicationRoutes");
 const noteRoutes = require("./routes/noteRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const interviewRoutes = require("./routes/interviewRoutes");
-const cors = require("cors");
 const env = require("./config/env");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 const app = express();
