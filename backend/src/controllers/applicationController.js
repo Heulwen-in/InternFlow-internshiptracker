@@ -206,6 +206,9 @@ const deleteApplication = async (req, res) => {
     }
 
     await prisma.$transaction([
+      prisma.task.updateMany({ 
+        where: { applicationId: application.id }, data: { applicationId: null } 
+      }),
       prisma.note.deleteMany({
         where: { applicationId: application.id },
       }),
