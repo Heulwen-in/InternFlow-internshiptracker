@@ -10,16 +10,17 @@ const {
   getMe,
 } = require("../controllers/authController");
 const requireAuth = require("../middleware/requireAuth");
+const { authLimiter, strictLimiter } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 
-router.post("/register", register);
-router.post("/login", login);
-router.post("/verify-email", verifyEmail);
-router.post("/resend-verification", resendVerification);
-router.post("/forgot-password", forgotPassword);
-router.post("/validate-reset-token", validateResetToken);
-router.post("/reset-password", resetPassword);
+router.post("/register", authLimiter, register);
+router.post("/login", strictLimiter, login);
+router.post("/verify-email", strictLimiter, verifyEmail);
+router.post("/resend-verification", authLimiter, resendVerification);
+router.post("/forgot-password", authLimiter, forgotPassword);
+router.post("/validate-reset-token", authLimiter, validateResetToken);
+router.post("/reset-password", strictLimiter, resetPassword);
 router.get("/me", requireAuth, getMe);
 
 module.exports = router;
