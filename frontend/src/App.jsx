@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import Tasks from "./pages/Tasks";
+import Profile from "./pages/Profile";
 import VerifyEmail from "./pages/VerifyEmail";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/applications/kanban" element={<KanbanBoard />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/tasks" element={<Tasks />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
     </Routes>
   );
