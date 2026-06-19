@@ -16,6 +16,12 @@ model User {
   emailVerificationOtpExpiresAt  DateTime?
   passwordResetTokenHash         String?
   passwordResetTokenExpiresAt    DateTime?
+  avatarUrl                      String?
+  avatarHue                      Int?
+  bio                            String?
+  school                         String?
+  graduationYear                 Int?
+  targetRole                     String?
   createdAt                      DateTime @default(now())
   applications                   Application[]
   companies                      Company[]
