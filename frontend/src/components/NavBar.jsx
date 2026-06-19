@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Moon, Plus, Sun } from "lucide-react";
+import { Moon, Plus, Sun, User } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import { useTheme } from "../context/ThemeContext";
-import { initials } from "../utils/dates";
+import UserAvatar from "./UserAvatar";
 
 const LINKS = [
   ["/dashboard", "Dashboard", true],
@@ -69,11 +69,12 @@ function NavBar({ onQuickAdd }) {
           </button>
           <div style={{ position: "relative" }} ref={menuRef}>
             <button
-              className="avatar"
+              className="avatar-btn"
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Account menu"
             >
-              {initials(user?.name)}
+              <UserAvatar user={user} size={30} />
             </button>
             {menuOpen && (
               <div
@@ -100,6 +101,16 @@ function NavBar({ onQuickAdd }) {
                     {user?.email}
                   </div>
                 </div>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{ width: "100%", justifyContent: "flex-start" }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate("/profile");
+                  }}
+                >
+                  <User size={14} /> Profile
+                </button>
                 <button
                   className="btn btn-ghost btn-sm"
                   style={{ width: "100%", justifyContent: "flex-start" }}
