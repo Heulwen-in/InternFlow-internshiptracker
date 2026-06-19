@@ -9,6 +9,11 @@ const {
   resetPassword,
   getMe,
 } = require("../controllers/authController");
+const {
+  updateProfile,
+  changePassword,
+  getProfileStats,
+} = require("../controllers/profileController");
 const requireAuth = require("../middleware/requireAuth");
 const { authLimiter, strictLimiter } = require("../middleware/rateLimiter");
 
@@ -22,5 +27,8 @@ router.post("/forgot-password", authLimiter, forgotPassword);
 router.post("/validate-reset-token", authLimiter, validateResetToken);
 router.post("/reset-password", strictLimiter, resetPassword);
 router.get("/me", requireAuth, getMe);
+router.get("/profile/stats", requireAuth, getProfileStats);
+router.patch("/profile", requireAuth, updateProfile);
+router.patch("/password", requireAuth, strictLimiter, changePassword);
 
 module.exports = router;
