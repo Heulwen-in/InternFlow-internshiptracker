@@ -14,7 +14,18 @@ module.exports = asyncHandler(async function requireAuth(req, _res, next) {
   const payload = authService.verifyToken(token);
   const user = await prisma.user.findUnique({
     where: { id: payload.sub },
-    select: { id: true, name: true, email: true, createdAt: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatarUrl: true,
+      avatarHue: true,
+      bio: true,
+      school: true,
+      graduationYear: true,
+      targetRole: true,
+      createdAt: true,
+    },
   });
   if (!user) {
     throw new HttpError(401, "User no longer exists");
