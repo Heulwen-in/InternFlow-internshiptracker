@@ -33,6 +33,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (nextUser) => {
+    setUser(nextUser);
+  };
+
+  const refreshUser = async () => {
+    const res = await api.get("/auth/me");
+    setUser(res.data.user);
+    return res.data.user;
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem("token");
@@ -65,6 +75,8 @@ export const AuthProvider = ({ children }) => {
         verifyEmail,
         resendVerification,
         logout,
+        updateUser,
+        refreshUser,
         isAuthenticated: !!user,
         isLoading,
       }}
