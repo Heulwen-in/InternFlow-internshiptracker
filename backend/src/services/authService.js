@@ -17,6 +17,12 @@ function publicUser(user) {
     id: user.id,
     name: user.name,
     email: user.email,
+    avatarUrl: user.avatarUrl ?? null,
+    avatarHue: user.avatarHue ?? null,
+    bio: user.bio ?? null,
+    school: user.school ?? null,
+    graduationYear: user.graduationYear ?? null,
+    targetRole: user.targetRole ?? null,
     createdAt: user.createdAt,
   };
 }
@@ -467,4 +473,5 @@ module.exports = {
   resetPassword,
   verifyToken,
   publicUser,
+  assertStrongPassword,
 };
