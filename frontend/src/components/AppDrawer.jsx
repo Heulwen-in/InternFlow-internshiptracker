@@ -20,6 +20,7 @@ import {
   getApplicationInterviews,
 } from "../api/interviewApi";
 import { createTask, getTasks, updateTask } from "../api/taskApi";
+import { useSettings } from "../context/SettingsContext";
 import { STATUSES, STATUS_HUES } from "../utils/status";
 import { daysUntil, fmtDateFull, fmtTime, relDay } from "../utils/dates";
 import PriorityMark from "./PriorityMark";
@@ -30,6 +31,7 @@ import TaskCheck from "./TaskCheck";
 const dangerInk = "oklch(var(--st-l) 0.12 22)";
 
 function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
+  const { settings } = useSettings();
   const [app, setApp] = useState(null);
   const [notes, setNotes] = useState([]);
   const [interviews, setInterviews] = useState([]);
@@ -149,7 +151,10 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Delete this application? Linked tasks will be kept and unlinked."))
+    if (
+      settings.confirmDelete &&
+      !confirm("Delete this application? Linked tasks will be kept and unlinked.")
+    )
       return;
     await Promise.all(tasks.map((t) => updateTask(t.id, { applicationId: null })));
     await deleteApplication(appId);
