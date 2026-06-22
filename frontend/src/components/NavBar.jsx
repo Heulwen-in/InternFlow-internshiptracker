@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Moon, Plus, Sun, User } from "lucide-react";
+import { Moon, Plus, Settings, Sun, User } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import { useTheme } from "../context/ThemeContext";
 import UserAvatar from "./UserAvatar";
@@ -110,6 +110,16 @@ function NavBar({ onQuickAdd }) {
                   }}
                 >
                   <User size={14} /> Profile
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{ width: "100%", justifyContent: "flex-start" }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate("/settings");
+                  }}
+                >
+                  <Settings size={14} /> Settings
                 </button>
                 <button
                   className="btn btn-ghost btn-sm"
