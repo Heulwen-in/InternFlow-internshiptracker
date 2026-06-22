@@ -5,6 +5,8 @@ import { getApplications } from "../api/applicationApi";
 import { getInterviews } from "../api/interviewApi";
 import { getTasks } from "../api/taskApi";
 import { useUI } from "../context/UIContext";
+import { useSettings } from "../context/SettingsContext";
+import { reorderWeekdays } from "../utils/settingsDefaults";
 import { parseDate, fmtTime, ymd } from "../utils/dates";
 
 const KIND_META = {
@@ -13,11 +15,11 @@ const KIND_META = {
   task: { hue: 250, label: "Task" },
 };
 
-const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 function Calendar() {
   const { refreshKey, openApp } = useUI();
+  const { settings } = useSettings();
   const navigate = useNavigate();
+  const DOW = reorderWeekdays(settings.weekStartsOn);
 
   const [apps, setApps] = useState([]);
   const [interviews, setInterviews] = useState([]);
@@ -99,7 +101,8 @@ function Calendar() {
   const cells = useMemo(() => {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
     const start = new Date(first);
-    start.setDate(first.getDate() - first.getDay());
+    const startOffset = (first.getDay() - settings.weekStartsOn + 7) % 7;
+    start.setDate(first.getDate() - startOffset);
     const out = [];
     const d = new Date(start);
     while (out.length < 42) {
@@ -114,7 +117,7 @@ function Calendar() {
         break;
     }
     return out;
-  }, [cursor]);
+  }, [cursor, settings.weekStartsOn]);
 
   const monthEventCount = cells.reduce(
     (n, d) =>

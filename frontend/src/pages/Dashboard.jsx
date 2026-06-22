@@ -6,6 +6,7 @@ import { getInterviews } from "../api/interviewApi";
 import { getTasks, updateTask } from "../api/taskApi";
 import { useAuth } from "../context/useAuth";
 import { useUI } from "../context/UIContext";
+import { useSettings } from "../context/SettingsContext";
 import { STATUSES, STATUS_HUES, statusLabel } from "../utils/status";
 import { daysUntil, fmtDateFull, relDay } from "../utils/dates";
 import TaskCheck from "../components/TaskCheck";
@@ -40,6 +41,7 @@ function dateKicker() {
 
 function Dashboard() {
   const { user } = useAuth();
+  const { settings } = useSettings();
   const { refreshKey, refresh, openApp } = useUI();
   const navigate = useNavigate();
 
@@ -132,7 +134,16 @@ function Dashboard() {
     return items.sort((x, y) => x.days - y.days).slice(0, 5);
   }, [apps, interviews, openTasks]);
 
-  const totalPipeline = STATUSES.reduce((n, s) => n + counts[s], 0) || 1;
+  const pipelineStatuses = useMemo(
+    () =>
+      settings.showRejectedInPipeline
+        ? STATUSES
+        : STATUSES.filter((s) => s !== "Rejected"),
+    [settings.showRejectedInPipeline]
+  );
+
+  const totalPipeline =
+    pipelineStatuses.reduce((n, s) => n + counts[s], 0) || 1;
 
   const handleToggleTask = async (task) => {
     setTasks((cur) =>
@@ -278,7 +289,7 @@ function Dashboard() {
               </button>
             </div>
             <div className="pipe-bar">
-              {STATUSES.map(
+              {pipelineStatuses.map(
                 (s) =>
                   counts[s] > 0 && (
                     <span
@@ -294,7 +305,7 @@ function Dashboard() {
               )}
             </div>
             <div className="pipe-legend">
-              {STATUSES.map((s) => (
+              {pipelineStatuses.map((s) => (
                 <button
                   key={s}
                   className="pipe-leg"

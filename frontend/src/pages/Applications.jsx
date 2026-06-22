@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { getApplications } from "../api/applicationApi";
 import { useUI } from "../context/UIContext";
+import { useSettings } from "../context/SettingsContext";
 import { PRIORITIES, STATUSES, WORK_TYPES } from "../utils/status";
 import { daysUntil, fmtDate, relDay } from "../utils/dates";
 import StatusBadge from "../components/StatusBadge";
@@ -29,6 +30,7 @@ function deadlineColor(deadline) {
 
 function Applications() {
   const { refreshKey, openApp, openNew } = useUI();
+  const { settings } = useSettings();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [apps, setApps] = useState([]);
@@ -41,7 +43,7 @@ function Applications() {
   const [workTypeFilter, setWorkTypeFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [view, setView] = useState(
-    () => localStorage.getItem("internflow-apps-view") || "table"
+    () => localStorage.getItem("internflow-apps-view") || settings.defaultAppsView
   );
 
   useEffect(() => {
