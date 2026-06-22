@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import Tasks from "./pages/Tasks";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import VerifyEmail from "./pages/VerifyEmail";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -38,6 +39,7 @@ function App() {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
     </Routes>
   );
