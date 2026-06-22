@@ -1,18 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, Lock, User } from "lucide-react";
+import { Camera, Check, User } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import UserAvatar from "../components/UserAvatar";
-import PasswordInput from "../components/PasswordInput";
-import { changePassword, getProfileStats, updateProfile } from "../api/profileApi";
+import AccountNav from "../components/AccountNav";
+import { getProfileStats, updateProfile } from "../api/profileApi";
 import { AVATAR_HUES, avatarStyles, readAvatarFile, resolveAvatarHue } from "../utils/avatar";
 import { fmtDate } from "../utils/dates";
-
-const passwordRules = (pw) => [
-  pw.length > 8,
-  /\d/.test(pw),
-  /[A-Z]/.test(pw),
-  /[^A-Za-z0-9]/.test(pw),
-];
 
 function Profile() {
   const { user, updateUser } = useAuth();
@@ -24,15 +17,6 @@ function Profile() {
   const [profileErr, setProfileErr] = useState("");
   const [avatarErr, setAvatarErr] = useState("");
   const [busy, setBusy] = useState(false);
-
-  const [pwForm, setPwForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [pwMsg, setPwMsg] = useState("");
-  const [pwErr, setPwErr] = useState("");
-  const [pwBusy, setPwBusy] = useState(false);
 
   useEffect(() => {
     getProfileStats()
@@ -130,36 +114,6 @@ function Profile() {
     }
   };
 
-  const savePassword = async (e) => {
-    e.preventDefault();
-    setPwMsg("");
-    setPwErr("");
-
-    const rules = passwordRules(pwForm.newPassword);
-    if (!rules.every(Boolean)) {
-      setPwErr("New password must meet all requirements below");
-      return;
-    }
-    if (pwForm.newPassword !== pwForm.confirmPassword) {
-      setPwErr("New passwords do not match");
-      return;
-    }
-
-    setPwBusy(true);
-    try {
-      await changePassword({
-        currentPassword: pwForm.currentPassword,
-        newPassword: pwForm.newPassword,
-      });
-      setPwMsg("Password updated");
-      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    } catch (err) {
-      setPwErr(err.response?.data?.message || "Failed to change password");
-    } finally {
-      setPwBusy(false);
-    }
-  };
-
   const memberSince = user?.createdAt
     ? fmtDate(user.createdAt, { month: "long", year: "numeric" })
     : "—";
@@ -175,6 +129,8 @@ function Profile() {
           <p className="page-sub">Manage how you appear across InternFlow.</p>
         </div>
       </div>
+
+      <AccountNav />
 
       <div className="profile-grid">
         <div className="profile-main">
@@ -326,73 +282,6 @@ function Profile() {
               style={{ alignSelf: "flex-start" }}
             >
               {busy ? "Saving…" : "Save profile"}
-            </button>
-          </form>
-
-          <form className="card profile-card" onSubmit={savePassword}>
-            <div className="card-head">
-              <h3 className="card-title">Security</h3>
-            </div>
-
-            <div className="profile-fields">
-              <div className="field">
-                <label className="field-label">Current password</label>
-                <PasswordInput
-                  value={pwForm.currentPassword}
-                  onChange={(e) =>
-                    setPwForm({ ...pwForm, currentPassword: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="field">
-                <label className="field-label">New password</label>
-                <PasswordInput
-                  value={pwForm.newPassword}
-                  onChange={(e) =>
-                    setPwForm({ ...pwForm, newPassword: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <ul className="password-rules" aria-label="Password requirements">
-                {[
-                  "More than 8 characters",
-                  "At least one number",
-                  "At least one capital letter",
-                  "At least one special character",
-                ].map((label, i) => (
-                  <li key={label} data-valid={passwordRules(pwForm.newPassword)[i]}>
-                    <span aria-hidden="true">
-                      {passwordRules(pwForm.newPassword)[i] ? "✓" : "○"}
-                    </span>
-                    {label}
-                  </li>
-                ))}
-              </ul>
-              <div className="field">
-                <label className="field-label">Confirm new password</label>
-                <PasswordInput
-                  value={pwForm.confirmPassword}
-                  onChange={(e) =>
-                    setPwForm({ ...pwForm, confirmPassword: e.target.value })
-                  }
-                  required
-                />
-              </div>
-            </div>
-
-            {pwErr && <span className="profile-err">{pwErr}</span>}
-            {pwMsg && <span className="profile-ok">{pwMsg}</span>}
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={pwBusy}
-              style={{ alignSelf: "flex-start" }}
-            >
-              <Lock size={14} />
-              {pwBusy ? "Updating…" : "Update password"}
             </button>
           </form>
         </div>
