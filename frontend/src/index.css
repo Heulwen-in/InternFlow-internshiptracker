@@ -203,6 +203,15 @@ textarea {
   background: oklch(var(--st-bg-l) var(--st-bg-c) 22);
 }
 
+.btn-danger {
+  background: oklch(0.52 0.16 22);
+  color: oklch(0.98 0.01 22);
+}
+
+.btn-danger:hover {
+  background: oklch(0.46 0.17 22);
+}
+
 .icon {
   flex: none;
 }
@@ -495,6 +504,14 @@ textarea {
   .page {
     animation: none;
   }
+}
+
+html[data-reduced-motion="reduce"] .page {
+  animation: none;
+}
+
+html[data-reduced-motion="normal"] .page {
+  animation: page-in 0.35s ease both;
 }
 
 .page-head {
