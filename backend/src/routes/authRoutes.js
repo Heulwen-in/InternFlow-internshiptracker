@@ -13,6 +13,9 @@ const {
   updateProfile,
   changePassword,
   getProfileStats,
+  getPreferences,
+  updatePreferences,
+  deleteAccount,
 } = require("../controllers/profileController");
 const requireAuth = require("../middleware/requireAuth");
 const { authLimiter, strictLimiter } = require("../middleware/rateLimiter");
@@ -28,7 +31,10 @@ router.post("/validate-reset-token", authLimiter, validateResetToken);
 router.post("/reset-password", strictLimiter, resetPassword);
 router.get("/me", requireAuth, getMe);
 router.get("/profile/stats", requireAuth, getProfileStats);
+router.get("/preferences", requireAuth, getPreferences);
+router.patch("/preferences", requireAuth, updatePreferences);
 router.patch("/profile", requireAuth, updateProfile);
 router.patch("/password", requireAuth, strictLimiter, changePassword);
+router.delete("/account", requireAuth, strictLimiter, deleteAccount);
 
 module.exports = router;
