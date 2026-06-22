@@ -155,8 +155,96 @@ async function getProfileStats(userId) {
   return { applications, tasks, completedTasks };
 }
 
+const DEFAULT_PREFERENCES = {
+  emailDeadlineReminders: true,
+  emailWeeklyDigest: false,
+  productUpdates: true,
+};
+
+function normalizePreferences(raw) {
+  const base = { ...DEFAULT_PREFERENCES };
+  if (!raw || typeof raw !== "object") return base;
+  return {
+    emailDeadlineReminders: Boolean(raw.emailDeadlineReminders ?? base.emailDeadlineReminders),
+    emailWeeklyDigest: Boolean(raw.emailWeeklyDigest ?? base.emailWeeklyDigest),
+    productUpdates: Boolean(raw.productUpdates ?? base.productUpdates),
+  };
+}
+
+async function getPreferences(userId) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { preferences: true },
+  });
+  if (!user) throw new HttpError(404, "Account not found");
+  return { preferences: normalizePreferences(user.preferences) };
+}
+
+async function updatePreferences(userId, patch) {
+  if (!patch || typeof patch !== "object") {
+    throw new HttpError(400, "Preferences payload is required");
+  }
+
+  const current = await getPreferences(userId);
+  const next = normalizePreferences({ ...current.preferences, ...patch });
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { preferences: next },
+  });
+
+  return { preferences: next };
+}
+
+async function deleteAccount(userId, password) {
+  if (!password) {
+    throw new HttpError(400, "Password is required to delete your account");
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new HttpError(404, "Account not found");
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    throw new HttpError(400, "Password is incorrect");
+  }
+
+  const applicationIds = (
+    await prisma.application.findMany({
+      where: { userId },
+      select: { id: true },
+    })
+  ).map((a) => a.id);
+
+  const ops = [
+    prisma.task.updateMany({ where: { userId }, data: { applicationId: null } }),
+  ];
+
+  if (applicationIds.length > 0) {
+    ops.push(
+      prisma.note.deleteMany({ where: { applicationId: { in: applicationIds } } }),
+      prisma.interview.deleteMany({ where: { applicationId: { in: applicationIds } } }),
+      prisma.statusHistory.deleteMany({ where: { applicationId: { in: applicationIds } } }),
+      prisma.application.deleteMany({ where: { userId } })
+    );
+  }
+
+  ops.push(
+    prisma.task.deleteMany({ where: { userId } }),
+    prisma.company.deleteMany({ where: { userId } }),
+    prisma.user.delete({ where: { id: userId } })
+  );
+
+  await prisma.$transaction(ops);
+
+  return { message: "Account deleted successfully" };
+}
+
 module.exports = {
   updateProfile,
   changePassword,
   getProfileStats,
+  getPreferences,
+  updatePreferences,
+  deleteAccount,
 };
