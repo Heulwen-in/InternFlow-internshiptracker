@@ -8,6 +8,12 @@ function notFound(_req, res, _next) {
 // Central error handler — mount LAST.
 // Express 5 forwards thrown errors from async handlers here automatically.
 function errorHandler(err, _req, res, _next) {
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({
+      message: "Request body is too large. Try a smaller avatar image.",
+    });
+  }
+
   const status = err.status && Number.isInteger(err.status) ? err.status : 500;
 
   if (status >= 500) {
