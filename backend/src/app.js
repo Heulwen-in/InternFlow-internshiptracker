@@ -11,7 +11,8 @@ const { notFound, errorHandler } = require("./middleware/errorHandler");
 const app = express();
 
 app.use(cors({ origin: env.corsOrigin }));
-app.use(express.json({ limit: "50kb" }));
+// Profile avatars are sent as base64 data URLs (~100–200 KB after resize).
+app.use(express.json({ limit: "512kb" }));
 
 app.get("/health", (req, res) => {
   res.json({ status: "OK", message: "Internship Tracker API is running" });
