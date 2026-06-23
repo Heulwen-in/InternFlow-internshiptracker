@@ -7,7 +7,7 @@ const SALT_ROUNDS = 12;
 const MAX_BIO = 280;
 const MAX_SCHOOL = 120;
 const MAX_TARGET_ROLE = 80;
-const MAX_AVATAR_URL = 200_000;
+const MAX_AVATAR_URL = 120_000;
 const AVATAR_DATA_URL_RE = /^data:image\/(jpeg|png|webp);base64,/i;
 
 function trimOrNull(value) {
