@@ -108,7 +108,11 @@ function Profile() {
       setDraft({});
       setProfileMsg("Profile saved");
     } catch (err) {
-      setProfileErr(err.response?.data?.message || "Failed to save profile");
+      setProfileErr(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Failed to save profile"
+      );
     } finally {
       setBusy(false);
     }
