@@ -8,6 +8,12 @@ import TaskCheck from "../components/TaskCheck";
 import EmptyState from "../components/EmptyState";
 
 const dangerInk = "oklch(var(--st-l) 0.12 22)";
+const TASK_TEMPLATES = [
+  "Follow up with recruiter",
+  "Tailor resume",
+  "Prepare interview notes",
+  "Send thank-you email",
+];
 
 function Tasks() {
   const { refreshKey, refresh, openApp } = useUI();
@@ -123,6 +129,19 @@ function Tasks() {
           <Plus size={14} /> Add
         </button>
       </form>
+
+      <div className="task-template-row" aria-label="Task templates">
+        {TASK_TEMPLATES.map((template) => (
+          <button
+            key={template}
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setDraft(template)}
+          >
+            {template}
+          </button>
+        ))}
+      </div>
 
       {groups.map(
         ([label, list, color]) =>
