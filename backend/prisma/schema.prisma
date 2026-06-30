@@ -27,6 +27,7 @@ model User {
   applications                   Application[]
   companies                      Company[]
   tasks                          Task[]
+  notifications                  Notification[]
 }
 
 model Company {
@@ -63,6 +64,7 @@ model Application {
   notes      Note[]
   tasks      Task[]
   interviews Interview[]
+  notifications Notification[]
 }
 
 model StatusHistory {
@@ -107,4 +109,19 @@ model Interview {
   createdAt     DateTime @default(now())
 
   application Application @relation(fields: [applicationId], references: [id])
+}
+
+model Notification {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  applicationId Int?
+  kind          String
+  title         String
+  body          String
+  reminderKey   String?   @unique
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  user        User         @relation(fields: [userId], references: [id])
+  application Application? @relation(fields: [applicationId], references: [id])
 }
