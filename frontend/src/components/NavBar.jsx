@@ -4,6 +4,7 @@ import { Moon, Plus, Settings, Sun, User } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import { useTheme } from "../context/ThemeContext";
 import UserAvatar from "./UserAvatar";
+import NotificationsMenu from "./NotificationsMenu";
 
 const LINKS = [
   ["/dashboard", "Dashboard", true],
@@ -58,6 +59,7 @@ function NavBar({ onQuickAdd }) {
           <button className="btn btn-primary btn-sm" onClick={onQuickAdd}>
             <Plus size={14} /> Add application
           </button>
+          <NotificationsMenu />
           <button
             className="icon-btn"
             title="Toggle theme"
