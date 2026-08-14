@@ -11,24 +11,24 @@ import {
   RotateCcw,
   Sun,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import { useSettings } from "../context/SettingsContext";
 import AccountNav from "../components/AccountNav";
 import PasswordInput from "../components/PasswordInput";
-import {
-  ACCENT_OPTIONS,
-  reorderWeekdays,
-} from "../utils/settingsDefaults";
+import { reorderWeekdays } from "../utils/settingsDefaults";
 import {
   changePassword,
   deleteAccount,
   getPreferences,
   updatePreferences,
 } from "../api/profileApi";
-import { getApplications } from "../api/applicationApi";
-import { getTasks } from "../api/taskApi";
-import api from "../api/axios";
+import {
+  exportApplicationsCsv,
+  exportData,
+  importData,
+} from "../api/dataApi";
 
 const passwordRules = (pw) => [
   pw.length > 8,
@@ -91,6 +91,8 @@ function Settings() {
   const [prefsErr, setPrefsErr] = useState("");
   const [exportBusy, setExportBusy] = useState(false);
   const [exportMsg, setExportMsg] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+  const [importMsg, setImportMsg] = useState("");
 
   const [pwForm, setPwForm] = useState({
     currentPassword: "",
@@ -124,6 +126,15 @@ function Settings() {
     }
   };
 
+  const toggleReminderDay = (day) => {
+    if (!prefs) return;
+    const current = prefs.reminderDaysBefore || [0, 1, 3];
+    const next = current.includes(day)
+      ? current.filter((value) => value !== day)
+      : [...current, day].sort((a, b) => a - b);
+    savePref({ reminderDaysBefore: next.length > 0 ? next : [0] });
+  };
+
   const savePassword = async (e) => {
     e.preventDefault();
     setPwMsg("");
@@ -152,35 +163,59 @@ function Settings() {
     }
   };
 
-  const handleExport = async () => {
+  const downloadBlob = (content, filename, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExport = async (format = "json") => {
     setExportBusy(true);
     setExportMsg("");
     try {
-      const [appsRes, tasksRes, companiesRes] = await Promise.all([
-        getApplications(),
-        getTasks(),
-        api.get("/companies"),
-      ]);
-      const payload = {
-        exportedAt: new Date().toISOString(),
-        applications: appsRes.data.applications || [],
-        tasks: tasksRes.data.tasks || [],
-        companies: companiesRes.data.companies || [],
-      };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `internflow-export-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (format === "csv") {
+        const res = await exportApplicationsCsv();
+        downloadBlob(res.data, `internflow-applications-${stamp}.csv`, "text/csv");
+      } else {
+        const res = await exportData();
+        downloadBlob(
+          JSON.stringify(res.data, null, 2),
+          `internflow-export-${stamp}.json`,
+          "application/json"
+        );
+      }
       setExportMsg("Download started");
     } catch {
       setExportMsg("Export failed — try again");
     } finally {
       setExportBusy(false);
+    }
+  };
+
+  const handleImport = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImportBusy(true);
+    setImportMsg("");
+    try {
+      const text = await file.text();
+      const isCsv = file.name.toLowerCase().endsWith(".csv");
+      const payload = isCsv ? text : JSON.parse(text);
+      const res = await importData({ format: isCsv ? "csv" : "json", payload });
+      const { created, skipped, tasksCreated } = res.data.summary;
+      setImportMsg(
+        `Imported ${created} application${created === 1 ? "" : "s"}, skipped ${skipped}, added ${tasksCreated} standalone task${tasksCreated === 1 ? "" : "s"}.`
+      );
+    } catch (err) {
+      setImportMsg(err.response?.data?.message || "Import failed — check the file format");
+    } finally {
+      setImportBusy(false);
+      event.target.value = "";
     }
   };
 
@@ -237,48 +272,6 @@ function Settings() {
                   ["system", "System"],
                 ]}
                 onChange={(themeMode) => updateSettings({ themeMode })}
-              />
-            </SettingRow>
-            <SettingRow label="Accent color" hint="Updates buttons, links, and highlights.">
-              <div className="settings-accent-row">
-                {ACCENT_OPTIONS.map(({ hue, label }) => (
-                  <button
-                    key={hue}
-                    type="button"
-                    className={
-                      "settings-accent-swatch" +
-                      (settings.accentHue === hue ? " active" : "")
-                    }
-                    style={{
-                      background: `oklch(0.52 0.145 ${hue})`,
-                    }}
-                    title={label}
-                    aria-label={label}
-                    onClick={() => updateSettings({ accentHue: hue })}
-                  />
-                ))}
-              </div>
-            </SettingRow>
-            <SettingRow label="Density" hint="Adjust spacing across lists and cards.">
-              <SettingSegment
-                value={settings.density}
-                options={[
-                  ["compact", "Compact"],
-                  ["regular", "Regular"],
-                  ["comfy", "Comfy"],
-                ]}
-                onChange={(density) => updateSettings({ density })}
-              />
-            </SettingRow>
-            <SettingRow label="Motion" hint="Reduce animations for accessibility.">
-              <SettingSegment
-                value={settings.reducedMotion}
-                options={[
-                  ["system", "System"],
-                  ["reduce", "Reduce"],
-                  ["normal", "Full"],
-                ]}
-                onChange={(reducedMotion) => updateSettings({ reducedMotion })}
               />
             </SettingRow>
           </section>
@@ -344,33 +337,33 @@ function Settings() {
               <>
                 <SettingRow
                   label="Deadline reminders"
-                  hint="Email nudges before application deadlines (when enabled)."
+                  hint="Show in-app notifications before application deadlines."
                 >
                   <SettingToggle
-                    checked={prefs.emailDeadlineReminders}
+                    checked={prefs.deadlineReminders}
                     label="Deadline reminders"
-                    onChange={(v) => savePref({ emailDeadlineReminders: v })}
+                    onChange={(v) => savePref({ deadlineReminders: v })}
                   />
                 </SettingRow>
                 <SettingRow
-                  label="Weekly digest"
-                  hint="A Sunday summary of your pipeline and upcoming tasks."
+                  label="Reminder timing"
+                  hint="Choose when deadlines, tasks, and interviews appear in the notification menu."
                 >
-                  <SettingToggle
-                    checked={prefs.emailWeeklyDigest}
-                    label="Weekly digest"
-                    onChange={(v) => savePref({ emailWeeklyDigest: v })}
-                  />
-                </SettingRow>
-                <SettingRow
-                  label="Product updates"
-                  hint="Occasional emails about new InternFlow features."
-                >
-                  <SettingToggle
-                    checked={prefs.productUpdates}
-                    label="Product updates"
-                    onChange={(v) => savePref({ productUpdates: v })}
-                  />
+                  <div className="settings-chip-row">
+                    {[0, 1, 3, 7].map((day) => (
+                      <button
+                        type="button"
+                        key={day}
+                        className={
+                          "settings-chip" +
+                          ((prefs.reminderDaysBefore || []).includes(day) ? " active" : "")
+                        }
+                        onClick={() => toggleReminderDay(day)}
+                      >
+                        {day === 0 ? "Same day" : `${day}d before`}
+                      </button>
+                    ))}
+                  </div>
                 </SettingRow>
                 {prefsMsg && <span className="profile-ok">{prefsMsg}</span>}
                 {prefsErr && <span className="profile-err">{prefsErr}</span>}
@@ -445,18 +438,42 @@ function Settings() {
               <h2 className="card-title">Your data</h2>
             </div>
             <p className="setting-row-hint">
-              Download a JSON backup of your applications, tasks, and companies.
+              Download a complete JSON backup, export applications as CSV, or import
+              a previous InternFlow backup/spreadsheet.
             </p>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleExport}
-              disabled={exportBusy}
-            >
-              <Download size={14} />
-              {exportBusy ? "Preparing…" : "Export data"}
-            </button>
+            <div className="settings-action-row">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => handleExport("json")}
+                disabled={exportBusy}
+              >
+                <Download size={14} />
+                {exportBusy ? "Preparing…" : "Export JSON"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => handleExport("csv")}
+                disabled={exportBusy}
+              >
+                <Download size={14} />
+                Export CSV
+              </button>
+              <label className="btn btn-ghost">
+                <Upload size={14} />
+                {importBusy ? "Importing…" : "Import file"}
+                <input
+                  type="file"
+                  accept=".json,.csv,application/json,text/csv"
+                  onChange={handleImport}
+                  disabled={importBusy}
+                  hidden
+                />
+              </label>
+            </div>
             {exportMsg && <span className="profile-ok">{exportMsg}</span>}
+            {importMsg && <span className="profile-ok">{importMsg}</span>}
           </section>
 
           <form className="card settings-card settings-danger" onSubmit={handleDeleteAccount}>
@@ -517,14 +534,6 @@ function Settings() {
                   : settings.themeMode === "dark"
                   ? "Dark theme"
                   : "Light theme"}
-              </div>
-              <div className="settings-preview-chip">
-                Accent ·{" "}
-                {ACCENT_OPTIONS.find((o) => o.hue === settings.accentHue)?.label ||
-                  "Custom"}
-              </div>
-              <div className="settings-preview-chip">
-                Density · {settings.density}
               </div>
             </div>
             <button

@@ -25,6 +25,7 @@ A full-stack application for students and graduates to track internship and job 
 - Task management grouped by Overdue, Today, Upcoming, and Done
 - Calendar month view for deadlines, interviews, and task due dates
 - Per-application notes and interview scheduling
+- In-app notifications for deadlines, tasks, and interviews
 
 ### UI / UX
 - Editorial design system (Newsreader, Schibsted Grotesk, Spline Sans Mono)
@@ -100,6 +101,8 @@ npm run dev              # http://localhost:5173
 | `/applications/kanban` | Drag-and-drop board by status |
 | `/calendar` | Month view of deadlines and events |
 | `/tasks` | Standalone and linked tasks |
+| `/profile` | Name, school, target role, and avatar |
+| `/settings` | Theme, defaults, notifications, and account |
 
 ## API Overview
 
@@ -143,6 +146,14 @@ Base URL: `http://localhost:5000/api`
 | GET | `/interviews` |
 | GET, POST | `/applications/:applicationId/interviews` |
 | DELETE | `/interviews/:id` |
+
+### Notifications
+
+| Method | Endpoint |
+|---|---|
+| GET | `/notifications` |
+| PATCH | `/notifications/:id/read` |
+| PATCH | `/notifications/read-all` |
 
 ### Health
 

@@ -435,6 +435,124 @@ textarea {
   color: var(--ink);
 }
 
+.notif-wrap {
+  position: relative;
+}
+
+.notif-trigger {
+  position: relative;
+}
+
+.notif-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+  border: 1px solid var(--bg);
+}
+
+.notif-popover {
+  position: absolute;
+  right: -46px;
+  top: 42px;
+  width: min(360px, calc(100vw - 28px));
+  max-height: 420px;
+  overflow: hidden;
+  box-shadow: var(--shadow-pop);
+  z-index: 60;
+}
+
+.notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.notif-head strong {
+  display: block;
+  font-size: 14px;
+}
+
+.notif-head span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.notif-list {
+  display: grid;
+  max-height: 340px;
+  overflow: auto;
+}
+
+.notif-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item:hover {
+  background: var(--surface-2);
+}
+
+.notif-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  margin-top: 7px;
+  flex: none;
+}
+
+.notif-item.unread .notif-dot {
+  background: var(--accent);
+}
+
+.notif-item strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.notif-item small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.notif-empty {
+  padding: 18px 16px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .avatar {
   width: 30px;
   height: 30px;
@@ -504,14 +622,6 @@ textarea {
   .page {
     animation: none;
   }
-}
-
-html[data-reduced-motion="reduce"] .page {
-  animation: none;
-}
-
-html[data-reduced-motion="normal"] .page {
-  animation: page-in 0.35s ease both;
 }
 
 .page-head {

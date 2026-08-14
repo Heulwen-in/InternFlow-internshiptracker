@@ -4,6 +4,7 @@ import { ArrowRight, Check, Flag, Video } from "lucide-react";
 import { getApplications } from "../api/applicationApi";
 import { getInterviews } from "../api/interviewApi";
 import { getTasks, updateTask } from "../api/taskApi";
+import { getAnalyticsOverview } from "../api/analyticsApi";
 import { useAuth } from "../context/useAuth";
 import { useUI } from "../context/UIContext";
 import { useSettings } from "../context/SettingsContext";
@@ -48,21 +49,24 @@ function Dashboard() {
   const [apps, setApps] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [interviews, setInterviews] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       try {
-        const [appsRes, tasksRes, ivRes] = await Promise.all([
+        const [appsRes, tasksRes, ivRes, analyticsRes] = await Promise.all([
           getApplications(),
           getTasks(),
           getInterviews(),
+          getAnalyticsOverview(),
         ]);
         if (cancelled) return;
         setApps(appsRes.data.applications || []);
         setTasks(tasksRes.data.tasks || []);
         setInterviews(ivRes.data.interviews || []);
+        setAnalytics(analyticsRes.data.overview || null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -177,13 +181,13 @@ function Dashboard() {
           <div className="stat-num">{active.length}</div>
         </div>
         <div className="stat-cell">
-          <div className="mono-label">In interviews</div>
-          <div className="stat-num">{counts.Interview}</div>
+          <div className="mono-label">Response rate</div>
+          <div className="stat-num">{analytics ? `${analytics.responseRate}%` : "—"}</div>
         </div>
         <div className="stat-cell">
-          <div className="mono-label">Offers</div>
+          <div className="mono-label">Offer rate</div>
           <div className="stat-num" style={{ color: "oklch(var(--st-l) 0.1 155)" }}>
-            {counts.Offer}
+            {analytics ? `${analytics.offerRate}%` : "—"}
           </div>
         </div>
         <div className="stat-cell">
@@ -191,6 +195,64 @@ function Dashboard() {
           <div className="stat-num">{openTasks.length}</div>
         </div>
       </section>
+
+      {analytics && (
+        <section className="card analytics-card">
+          <div className="card-head">
+            <h2 className="card-title">Search insights</h2>
+            <span className="mono-label">{analytics.total} tracked</span>
+          </div>
+          <div className="analytics-grid">
+            <div>
+              <div className="mono-label">Funnel</div>
+              <div className="analytics-bars">
+                {analytics.funnel.map((item) => (
+                  <div key={item.status} className="analytics-bar-row">
+                    <span>{statusLabel(item.status)}</span>
+                    <i>
+                      <b
+                        style={{
+                          width: `${analytics.total ? (item.count / analytics.total) * 100 : 0}%`,
+                          background: `oklch(var(--st-l) var(--st-chroma) ${STATUS_HUES[item.status]})`,
+                        }}
+                      />
+                    </i>
+                    <strong>{item.count}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="mono-label">Avg days in stage</div>
+              <div className="analytics-list">
+                {analytics.timeInStatus
+                  .filter((item) => item.samples > 0)
+                  .slice(0, 4)
+                  .map((item) => (
+                    <span key={item.status}>
+                      {statusLabel(item.status)}
+                      <strong>{item.averageDays}d</strong>
+                    </span>
+                  ))}
+              </div>
+            </div>
+            <div>
+              <div className="mono-label">Weekly activity</div>
+              <div className="spark-bars">
+                {analytics.weeklyActivity.map((item) => (
+                  <span key={item.week} title={`${item.week}: ${item.applications}`}>
+                    <i
+                      style={{
+                        height: `${Math.max(10, item.applications * 16)}px`,
+                      }}
+                    />
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="dash-grid">
         <section className="card">

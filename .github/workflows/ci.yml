@@ -8,8 +8,22 @@ on:
 
 jobs:
   backend:
-    name: Backend (prisma validate)
+    name: Backend (test + prisma validate)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: internflow_user
+          POSTGRES_PASSWORD: internflow_password
+          POSTGRES_DB: internflow_tracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U internflow_user -d internflow_tracker"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend
@@ -27,6 +41,9 @@ jobs:
 
       - name: Validate Prisma schema
         run: npx prisma validate
+
+      - name: Run tests
+        run: npm test
 
       - name: Syntax check source files
         run: node -e "require('fs').readdirSync('src',{recursive:true}).filter(f=>f.endsWith('.js')).forEach(f=>require('child_process').execSync('node --check src/'+f,{stdio:'inherit'}))"
@@ -51,6 +68,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Test
+        run: npm test
 
       - name: Build
         run: npm run build
