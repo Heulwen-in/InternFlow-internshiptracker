@@ -173,11 +173,12 @@ function normalizePreferences(raw) {
   const base = { ...DEFAULT_PREFERENCES };
   if (!raw || typeof raw !== "object") return base;
   return {
-    emailDeadlineReminders: Boolean(raw.emailDeadlineReminders ?? base.emailDeadlineReminders),
-    emailDailyDigest: Boolean(raw.emailDailyDigest ?? base.emailDailyDigest),
-    emailWeeklyDigest: Boolean(raw.emailWeeklyDigest ?? base.emailWeeklyDigest),
-    productUpdates: Boolean(raw.productUpdates ?? base.productUpdates),
-    reminderDaysBefore: normalizeReminderDays(raw.reminderDaysBefore ?? base.reminderDaysBefore),
+    deadlineReminders: Boolean(
+      raw.deadlineReminders ?? raw.emailDeadlineReminders ?? base.deadlineReminders
+    ),
+    reminderDaysBefore: normalizeReminderDays(
+      raw.reminderDaysBefore ?? base.reminderDaysBefore
+    ),
   };
 }
 

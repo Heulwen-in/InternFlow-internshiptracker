@@ -1,7 +1,3 @@
-jest.mock("../../utils/mailer", () => ({
-  sendMail: jest.fn().mockResolvedValue(undefined),
-}));
-
 const { prisma, cleanDb, disconnect } = require("../helpers/db");
 const { makeVerifiedUser } = require("../helpers/auth");
 const { buildReminderCandidates } = require("../../services/reminderService");
