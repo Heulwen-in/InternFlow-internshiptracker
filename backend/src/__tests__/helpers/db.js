@@ -10,6 +10,7 @@ async function cleanDb() {
   await prisma.statusHistory.deleteMany();
   await prisma.interview.deleteMany();
   await prisma.note.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.task.deleteMany();
   await prisma.application.deleteMany();
   await prisma.company.deleteMany();

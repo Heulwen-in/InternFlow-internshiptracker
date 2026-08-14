@@ -1,5 +1,4 @@
 const prisma = require("../config/prisma");
-const { sendMail } = require("../utils/mailer");
 const HttpError = require("../utils/httpError");
 const { normalizePreferences } = require("./profileService");
 
@@ -71,7 +70,7 @@ async function buildReminderCandidates(userId, now = new Date()) {
 
   const candidates = [];
 
-  if (preferences.emailDeadlineReminders) {
+  if (preferences.deadlineReminders) {
     applications.forEach((application) => {
       const days = daysUntil(application.deadline, now);
       if (!reminderDays.includes(days)) return;
@@ -193,79 +192,10 @@ async function markAllNotificationsRead(userId) {
   return { message: "Notifications marked as read" };
 }
 
-function digestText(user, candidates) {
-  const lines = [
-    `Hi ${user.name.split(" ")[0]},`,
-    "",
-    "Here is your InternFlow reminder digest:",
-    "",
-    ...candidates.map((item) => `- ${item.title}: ${item.body}`),
-    "",
-    "Keep your pipeline moving.",
-  ];
-  return lines.join("\n");
-}
-
-function digestHtml(user, candidates) {
-  const rows = candidates
-    .map(
-      (item) =>
-        `<li><strong>${item.title}</strong><br/><span>${item.body}</span></li>`
-    )
-    .join("");
-  return `<p>Hi ${user.name.split(" ")[0]},</p><p>Here is your InternFlow reminder digest:</p><ul>${rows}</ul><p>Keep your pipeline moving.</p>`;
-}
-
-async function sendDailyDigestForUser(userId) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, email: true, preferences: true },
-  });
-  if (!user) throw new HttpError(404, "Account not found");
-
-  const preferences = normalizePreferences(user.preferences);
-  if (!preferences.emailDailyDigest) {
-    return { sent: false, reason: "Daily digest is disabled" };
-  }
-
-  const candidates = await buildReminderCandidates(user.id);
-  if (candidates.length === 0) {
-    return { sent: false, reason: "No reminders to send" };
-  }
-
-  await sendMail({
-    to: user.email,
-    subject: `InternFlow digest: ${candidates.length} item${candidates.length === 1 ? "" : "s"} need attention`,
-    text: digestText(user, candidates),
-    html: digestHtml(user, candidates),
-  });
-
-  await ensureReminderNotifications(user.id);
-
-  return { sent: true, count: candidates.length };
-}
-
-async function sendDailyDigests() {
-  const users = await prisma.user.findMany({
-    where: { emailVerified: true },
-    select: { id: true, preferences: true },
-  });
-
-  const results = [];
-  for (const user of users) {
-    const preferences = normalizePreferences(user.preferences);
-    if (!preferences.emailDailyDigest) continue;
-    results.push({ userId: user.id, ...(await sendDailyDigestForUser(user.id)) });
-  }
-  return { processed: results.length, results };
-}
-
 module.exports = {
   buildReminderCandidates,
   ensureReminderNotifications,
   listNotifications,
   markNotificationRead,
   markAllNotificationsRead,
-  sendDailyDigestForUser,
-  sendDailyDigests,
 };

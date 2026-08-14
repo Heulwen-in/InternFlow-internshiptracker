@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { toDate } = require("../utils/date");
+const { createStatusFollowUps } = require("../services/workflowService");
 
 const getApplications = async (req, res) => {
   try {
@@ -104,6 +105,10 @@ const createApplication = async (req, res) => {
       },
     });
 
+    if (application.status !== "Saved") {
+      await createStatusFollowUps(application, application.status);
+    }
+
     res.status(201).json({ application });
   } catch (error) {
     console.error("[applications.createApplication]", error);
@@ -184,6 +189,10 @@ const updateApplication = async (req, res) => {
       },
     });
 
+    if (statusChanged) {
+      await createStatusFollowUps(application, status);
+    }
+
     res.json({ application });
   } catch (error) {
     console.error("[applications.updateApplication]", error);
@@ -212,6 +221,9 @@ const deleteApplication = async (req, res) => {
         where: { applicationId: application.id },
       }),
       prisma.interview.deleteMany({
+        where: { applicationId: application.id },
+      }),
+      prisma.notification.deleteMany({
         where: { applicationId: application.id },
       }),
       prisma.statusHistory.deleteMany({

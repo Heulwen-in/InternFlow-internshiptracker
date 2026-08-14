@@ -36,21 +36,8 @@ const markAllNotificationsRead = async (req, res) => {
   }
 };
 
-const sendDailyDigest = async (req, res) => {
-  try {
-    const result = await reminderService.sendDailyDigestForUser(req.user.id);
-    res.json(result);
-  } catch (error) {
-    console.error("[reminders.sendDailyDigest]", error);
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Failed to send digest" });
-  }
-};
-
 module.exports = {
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,
-  sendDailyDigest,
 };

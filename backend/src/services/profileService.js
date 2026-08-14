@@ -156,18 +156,28 @@ async function getProfileStats(userId) {
 }
 
 const DEFAULT_PREFERENCES = {
-  emailDeadlineReminders: true,
-  emailWeeklyDigest: false,
-  productUpdates: true,
+  deadlineReminders: true,
+  reminderDaysBefore: [0, 1, 3],
 };
+
+function normalizeReminderDays(value) {
+  const fallback = DEFAULT_PREFERENCES.reminderDaysBefore;
+  if (!Array.isArray(value)) return fallback;
+  const days = [...new Set(value.map(Number))]
+    .filter((day) => Number.isInteger(day) && day >= 0 && day <= 14)
+    .sort((a, b) => a - b);
+  return days.length > 0 ? days : fallback;
+}
 
 function normalizePreferences(raw) {
   const base = { ...DEFAULT_PREFERENCES };
   if (!raw || typeof raw !== "object") return base;
   return {
     emailDeadlineReminders: Boolean(raw.emailDeadlineReminders ?? base.emailDeadlineReminders),
+    emailDailyDigest: Boolean(raw.emailDailyDigest ?? base.emailDailyDigest),
     emailWeeklyDigest: Boolean(raw.emailWeeklyDigest ?? base.emailWeeklyDigest),
     productUpdates: Boolean(raw.productUpdates ?? base.productUpdates),
+    reminderDaysBefore: normalizeReminderDays(raw.reminderDaysBefore ?? base.reminderDaysBefore),
   };
 }
 
@@ -224,12 +234,14 @@ async function deleteAccount(userId, password) {
     ops.push(
       prisma.note.deleteMany({ where: { applicationId: { in: applicationIds } } }),
       prisma.interview.deleteMany({ where: { applicationId: { in: applicationIds } } }),
+      prisma.notification.deleteMany({ where: { applicationId: { in: applicationIds } } }),
       prisma.statusHistory.deleteMany({ where: { applicationId: { in: applicationIds } } }),
       prisma.application.deleteMany({ where: { userId } })
     );
   }
 
   ops.push(
+    prisma.notification.deleteMany({ where: { userId } }),
     prisma.task.deleteMany({ where: { userId } }),
     prisma.company.deleteMany({ where: { userId } }),
     prisma.user.delete({ where: { id: userId } })
@@ -247,4 +259,5 @@ module.exports = {
   getPreferences,
   updatePreferences,
   deleteAccount,
+  normalizePreferences,
 };

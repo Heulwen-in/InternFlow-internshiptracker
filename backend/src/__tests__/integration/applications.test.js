@@ -132,6 +132,30 @@ describe("PUT /api/applications/:id", () => {
     expect(res.status).toBe(200);
     expect(res.body.application.statusHistory).toHaveLength(0);
   });
+
+  test("status change to Applied creates a follow-up task once", async () => {
+    const created = await prisma.application.create({
+      data: {
+        userId: user.id, companyId: company.id, roleTitle: "Dev", status: "Saved",
+      },
+    });
+
+    await request(app)
+      .put(`/api/applications/${created.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ status: "Applied" });
+    await request(app)
+      .put(`/api/applications/${created.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ status: "Applied" });
+
+    const tasks = await prisma.task.findMany({
+      where: { userId: user.id, applicationId: created.id },
+    });
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].title).toContain("Follow up");
+  });
 });
 
 // ─── Delete cascade ───────────────────────────────────────────────────────────
@@ -195,12 +219,12 @@ describe("DELETE /api/applications/:id", () => {
 // ─── Body size limit ──────────────────────────────────────────────────────────
 
 describe("Payload size limit", () => {
-  test("413 when body exceeds 50 kb", async () => {
+  test("413 when body exceeds the JSON parser limit", async () => {
     const res = await request(app)
       .post("/api/applications")
       .set("Authorization", `Bearer ${token}`)
       .set("Content-Type", "application/json")
-      .send(JSON.stringify({ companyId: company.id, roleTitle: "x".repeat(60_000) }));
+      .send(JSON.stringify({ companyId: company.id, roleTitle: "x".repeat(600_000) }));
 
     expect(res.status).toBe(413);
   });

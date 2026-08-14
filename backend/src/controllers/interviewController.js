@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { toDate } = require("../utils/date");
+const { createInterviewFollowUps } = require("../services/workflowService");
 
 const getInterviews = async (req, res) => {
   try {
@@ -27,6 +28,7 @@ const getApplicationInterviews = async (req, res) => {
 
     const application = await prisma.application.findFirst({
       where: { id: applicationId, userId: req.user.id },
+      include: { company: true },
     });
 
     if (!application) {
@@ -70,6 +72,8 @@ const createInterview = async (req, res) => {
         notes,
       },
     });
+
+    await createInterviewFollowUps(application, interview);
 
     res.status(201).json({ interview });
   } catch {

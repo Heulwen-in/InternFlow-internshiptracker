@@ -4,7 +4,6 @@ const {
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,
-  sendDailyDigest,
 } = require("../controllers/reminderController");
 
 const router = express.Router();
@@ -14,6 +13,5 @@ router.use(protect);
 router.get("/notifications", getNotifications);
 router.patch("/notifications/read-all", markAllNotificationsRead);
 router.patch("/notifications/:id/read", markNotificationRead);
-router.post("/reminders/digest", sendDailyDigest);
 
 module.exports = router;

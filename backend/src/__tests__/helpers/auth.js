@@ -8,10 +8,11 @@ async function makeVerifiedUser({
   name = "Test User",
   email = "test@example.com",
   password = "Password1!",
+  preferences,
 } = {}) {
   const passwordHash = await bcrypt.hash(password, 4);
   return prisma.user.create({
-    data: { name, email, passwordHash, emailVerified: true },
+    data: { name, email, passwordHash, emailVerified: true, preferences },
   });
 }
 
