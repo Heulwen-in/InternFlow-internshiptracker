@@ -696,6 +696,159 @@ table.apps tbody tr:last-child td {
   border-bottom: none;
 }
 
+/* ---------- feedback ---------- */
+.toast-viewport {
+  position: fixed;
+  top: 74px;
+  right: 20px;
+  width: min(380px, calc(100vw - 28px));
+  display: grid;
+  gap: 10px;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 11px;
+  padding: 13px 12px 13px 14px;
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  pointer-events: auto;
+  animation: toast-in 0.2s ease both;
+}
+
+.toast-success {
+  border-left-color: oklch(var(--st-l) 0.1 155);
+}
+
+.toast-error {
+  border-left-color: oklch(var(--st-l) 0.12 22);
+}
+
+.toast-info {
+  border-left-color: oklch(var(--st-l) 0.1 250);
+}
+
+.toast-success .toast-icon {
+  color: oklch(var(--st-l) 0.1 155);
+}
+
+.toast-error .toast-icon {
+  color: oklch(var(--st-l) 0.12 22);
+}
+
+.toast-info .toast-icon {
+  color: oklch(var(--st-l) 0.1 250);
+}
+
+.toast-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toast-copy strong {
+  font-size: 13.5px;
+}
+
+.toast-copy span {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.toast-close {
+  width: 28px;
+  height: 28px;
+  margin: -5px -4px 0 0;
+}
+
+.loading-state,
+.error-state {
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--muted);
+}
+
+.loading-state.compact,
+.error-state.compact {
+  min-height: 70px;
+  padding: 16px;
+}
+
+.loading-spinner {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--accent);
+  animation: feedback-spin 0.75s linear infinite;
+}
+
+.error-state {
+  justify-content: flex-start;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: oklch(var(--st-l) 0.12 22);
+}
+
+.error-state > div {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+
+.error-state strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.error-state span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+@keyframes feedback-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .toast-viewport {
+    top: auto;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .loading-spinner {
+    animation: none;
+  }
+}
+
 /* ---------- scrollbars (webkit) ---------- */
 ::-webkit-scrollbar {
   width: 10px;
