@@ -1,15 +1,20 @@
 const authService = require("../services/authService");
 
+function sendError(res, error, fallbackMessage, context) {
+  const status = error.status || 500;
+  if (status >= 500) {
+    console.error(`[${context}] error:`, error);
+  }
+  return res.status(status).json({ message: error.message || fallbackMessage });
+}
+
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body ?? {};
     const result = await authService.register({ name, email, password });
     res.status(201).json(result);
   } catch (error) {
-    console.error("[register] error:", error);
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Registration failed" });
+    sendError(res, error, "Registration failed", "register");
   }
 };
 
@@ -19,8 +24,7 @@ const login = async (req, res) => {
     const result = await authService.login({ email, password });
     res.json(result);
   } catch (error) {
-    console.error("[login] error:", error);
-    res.status(error.status || 500).json({ message: error.message || "Login failed" });
+    sendError(res, error, "Login failed", "login");
   }
 };
 
@@ -30,10 +34,7 @@ const verifyEmail = async (req, res) => {
     const result = await authService.verifyEmail({ email, otp });
     res.json(result);
   } catch (error) {
-    console.error("[verifyEmail] error:", error);
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Email verification failed" });
+    sendError(res, error, "Email verification failed", "verifyEmail");
   }
 };
 
@@ -43,10 +44,7 @@ const resendVerification = async (req, res) => {
     const result = await authService.resendVerification({ email });
     res.json(result);
   } catch (error) {
-    console.error("[resendVerification] error:", error);
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Failed to resend verification code" });
+    sendError(res, error, "Failed to resend verification code", "resendVerification");
   }
 };
 
@@ -56,10 +54,7 @@ const forgotPassword = async (req, res) => {
     const result = await authService.forgotPassword({ email });
     res.json(result);
   } catch (error) {
-    console.error("[forgotPassword] error:", error);
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Failed to send reset email" });
+    sendError(res, error, "Failed to send reset email", "forgotPassword");
   }
 };
 
@@ -69,10 +64,7 @@ const validateResetToken = async (req, res) => {
     const result = await authService.validateResetToken({ token });
     res.json(result);
   } catch (error) {
-    console.error("[validateResetToken] error:", error);
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "This link has been expired" });
+    sendError(res, error, "This link has been expired", "validateResetToken");
   }
 };
 
@@ -82,10 +74,7 @@ const resetPassword = async (req, res) => {
     const result = await authService.resetPassword({ token, password });
     res.json(result);
   } catch (error) {
-    console.error("[resetPassword] error:", error);
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Failed to reset password" });
+    sendError(res, error, "Failed to reset password", "resetPassword");
   }
 };
 

@@ -10,6 +10,8 @@ jobs:
   backend:
     name: Backend (test + prisma validate)
     runs-on: ubuntu-latest
+    env:
+      TZ: UTC
     services:
       postgres:
         image: postgres:16
@@ -42,8 +44,8 @@ jobs:
       - name: Validate Prisma schema
         run: npx prisma validate
 
-      - name: Run tests
-        run: npm test
+      - name: Run tests with coverage
+        run: npm run test:coverage
 
       - name: Syntax check source files
         run: node -e "require('fs').readdirSync('src',{recursive:true}).filter(f=>f.endsWith('.js')).forEach(f=>require('child_process').execSync('node --check src/'+f,{stdio:'inherit'}))"

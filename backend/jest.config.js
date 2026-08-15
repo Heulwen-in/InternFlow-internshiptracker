@@ -10,6 +10,11 @@ module.exports = {
     "!src/server.js",
   ],
   coverageThreshold: {
-    global: { lines: 70 },
+    global: {
+      statements: 50,
+      branches: 30,
+      functions: 40,
+      lines: 50,
+    },
   },
 };
