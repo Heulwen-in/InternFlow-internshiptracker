@@ -8,6 +8,9 @@ import { useUI } from "../context/UIContext";
 import { useSettings } from "../context/SettingsContext";
 import { reorderWeekdays } from "../utils/settingsDefaults";
 import { parseDate, fmtTime, ymd } from "../utils/dates";
+import ErrorState from "../components/ErrorState";
+import LoadingState from "../components/LoadingState";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const KIND_META = {
   interview: { hue: 45, label: "Interview" },
@@ -24,6 +27,9 @@ function Calendar() {
   const [apps, setApps] = useState([]);
   const [interviews, setInterviews] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
   const [cursor, setCursor] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -32,21 +38,31 @@ function Calendar() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const [appsRes, ivRes, tasksRes] = await Promise.all([
-        getApplications(),
-        getInterviews(),
-        getTasks(),
-      ]);
-      if (cancelled) return;
-      setApps(appsRes.data.applications || []);
-      setInterviews(ivRes.data.interviews || []);
-      setTasks(tasksRes.data.tasks || []);
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [appsRes, ivRes, tasksRes] = await Promise.all([
+          getApplications(),
+          getInterviews(),
+          getTasks(),
+        ]);
+        if (cancelled) return;
+        setApps(appsRes.data.applications || []);
+        setInterviews(ivRes.data.interviews || []);
+        setTasks(tasksRes.data.tasks || []);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(getApiErrorMessage(error, "Failed to load calendar events"));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     load();
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, retryKey]);
 
   const eventsByDay = useMemo(() => {
     const map = {};
@@ -187,6 +203,16 @@ function Calendar() {
         </div>
       </header>
 
+      {loadError ? (
+        <ErrorState
+          message={loadError}
+          onRetry={() => setRetryKey((key) => key + 1)}
+        />
+      ) : loading ? (
+        <div className="card">
+          <LoadingState label="Loading calendar…" />
+        </div>
+      ) : (
       <div className="card" style={{ overflow: "hidden" }}>
         <div className="cal-grid">
           {DOW.map((d) => (
@@ -238,6 +264,7 @@ function Calendar() {
           })}
         </div>
       </div>
+      )}
     </main>
   );
 }

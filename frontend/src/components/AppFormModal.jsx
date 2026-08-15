@@ -12,6 +12,10 @@ import {
 } from "../api/companyApi";
 import { PRIORITIES, STATUSES, WORK_TYPES } from "../utils/status";
 import { toInputDate, todayInputDate } from "../utils/dates";
+import ErrorState from "./ErrorState";
+import LoadingState from "./LoadingState";
+import { useFeedback } from "../context/FeedbackContext";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const EMPTY = {
   company: "",
@@ -29,6 +33,7 @@ const EMPTY = {
 const dangerInk = "oklch(var(--st-l) 0.12 22)";
 
 function AppFormModal({ mode, onClose, refresh, openApp }) {
+  const feedback = useFeedback();
   const isEdit = mode !== "new";
   const editId = isEdit ? Number(mode) : null;
 
@@ -38,6 +43,8 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -52,6 +59,8 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      setLoading(isEdit);
+      setLoadError("");
       try {
         const companiesRes = await getCompanies();
         if (!cancelled) setCompanies(companiesRes.data.companies || []);
@@ -73,8 +82,10 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
             deadline: toInputDate(a.deadline),
           });
         }
-      } catch {
-        if (!cancelled) setServerError("Failed to load form data");
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(getApiErrorMessage(error, "Failed to load form data"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -83,7 +94,7 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
     return () => {
       cancelled = true;
     };
-  }, [isEdit, editId]);
+  }, [isEdit, editId, retryKey]);
 
   const resolveCompanyId = async () => {
     const name = form.company.trim();
@@ -141,18 +152,20 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
 
       if (isEdit) {
         await updateApplication(editId, payload);
+        feedback.success("Application updated");
         refresh();
         onClose();
       } else {
         const res = await createApplication(payload);
+        feedback.success("Application added");
         refresh();
         const newId = res.data.application.id;
         openApp(newId);
       }
     } catch (err) {
-      setServerError(
-        err.response?.data?.message || "Failed to save application"
-      );
+      const message = getApiErrorMessage(err, "Failed to save application");
+      setServerError(message);
+      feedback.error(message);
       setSaving(false);
     }
   };
@@ -188,7 +201,13 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
 
         <div style={{ padding: "18px 26px 26px" }}>
           {loading ? (
-            <p style={{ color: "var(--muted)" }}>Loading…</p>
+            <LoadingState label="Loading application…" compact />
+          ) : loadError ? (
+            <ErrorState
+              message={loadError}
+              onRetry={() => setRetryKey((key) => key + 1)}
+              compact
+            />
           ) : (
             <>
               {serverError && (

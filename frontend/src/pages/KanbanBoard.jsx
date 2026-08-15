@@ -6,24 +6,42 @@ import { STATUSES, STATUS_HUES } from "../utils/status";
 import { daysUntil, relDay } from "../utils/dates";
 import CompanyMark from "../components/CompanyMark";
 import PriorityMark from "../components/PriorityMark";
+import ErrorState from "../components/ErrorState";
+import LoadingState from "../components/LoadingState";
+import { useFeedback } from "../context/FeedbackContext";
+import { getApiErrorMessage } from "../utils/apiError";
 
 function KanbanBoard() {
   const { refreshKey, refresh, openApp, openNew } = useUI();
+  const feedback = useFeedback();
   const [apps, setApps] = useState([]);
   const [dragId, setDragId] = useState(null);
   const [overCol, setOverCol] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const res = await getApplications();
-      if (!cancelled) setApps(res.data.applications || []);
+      setLoading(true);
+      setLoadError("");
+      try {
+        const res = await getApplications();
+        if (!cancelled) setApps(res.data.applications || []);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(getApiErrorMessage(error, "Failed to load the board"));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     load();
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, retryKey]);
 
   const grouped = useMemo(() => {
     const g = {};
@@ -43,9 +61,15 @@ function KanbanBoard() {
     );
     try {
       await updateApplicationStatus(id, status);
+      feedback.success(`${app.company?.name || app.roleTitle} moved to ${status}`);
       refresh();
-    } catch {
-      refresh();
+    } catch (error) {
+      setApps((cur) =>
+        cur.map((item) =>
+          item.id === id ? { ...item, status: app.status } : item
+        )
+      );
+      feedback.error(getApiErrorMessage(error, "Failed to update application status"));
     }
   };
 
@@ -65,6 +89,16 @@ function KanbanBoard() {
         </header>
       </div>
 
+      {loadError ? (
+        <ErrorState
+          message={loadError}
+          onRetry={() => setRetryKey((key) => key + 1)}
+        />
+      ) : loading ? (
+        <div className="card">
+          <LoadingState label="Loading board…" />
+        </div>
+      ) : (
       <div className="board-rail">
         {STATUSES.map((status) => (
           <section
@@ -161,6 +195,7 @@ function KanbanBoard() {
           </section>
         ))}
       </div>
+      )}
     </main>
   );
 }

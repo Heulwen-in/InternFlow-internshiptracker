@@ -19,6 +19,9 @@ import PriorityMark from "../components/PriorityMark";
 import CompanyMark from "../components/CompanyMark";
 import FilterSelect from "../components/FilterSelect";
 import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
+import LoadingState from "../components/LoadingState";
+import { getApiErrorMessage } from "../utils/apiError";
 
 function deadlineColor(deadline) {
   const d = daysUntil(deadline);
@@ -35,6 +38,8 @@ function Applications() {
 
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(
     searchParams.get("status") || "All"
@@ -53,9 +58,15 @@ function Applications() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      setLoading(true);
+      setLoadError("");
       try {
         const res = await getApplications();
         if (!cancelled) setApps(res.data.applications || []);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(getApiErrorMessage(error, "Failed to load applications"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -64,7 +75,7 @@ function Applications() {
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, retryKey]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -190,9 +201,14 @@ function Applications() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="card" style={{ padding: 24, color: "var(--muted)" }}>
-          Loading applications…
+      {loadError ? (
+        <ErrorState
+          message={loadError}
+          onRetry={() => setRetryKey((key) => key + 1)}
+        />
+      ) : loading ? (
+        <div className="card">
+          <LoadingState label="Loading applications…" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="card">

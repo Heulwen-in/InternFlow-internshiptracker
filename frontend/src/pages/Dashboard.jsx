@@ -12,6 +12,10 @@ import { STATUSES, STATUS_HUES, statusLabel } from "../utils/status";
 import { daysUntil, fmtDateFull, relDay } from "../utils/dates";
 import TaskCheck from "../components/TaskCheck";
 import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
+import LoadingState from "../components/LoadingState";
+import { useFeedback } from "../context/FeedbackContext";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const dangerInk = "oklch(var(--st-l) 0.12 22)";
 
@@ -44,6 +48,7 @@ function Dashboard() {
   const { user } = useAuth();
   const { settings } = useSettings();
   const { refreshKey, refresh, openApp } = useUI();
+  const feedback = useFeedback();
   const navigate = useNavigate();
 
   const [apps, setApps] = useState([]);
@@ -51,10 +56,14 @@ function Dashboard() {
   const [interviews, setInterviews] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      setLoading(true);
+      setLoadError("");
       try {
         const [appsRes, tasksRes, ivRes, analyticsRes] = await Promise.all([
           getApplications(),
@@ -67,6 +76,10 @@ function Dashboard() {
         setTasks(tasksRes.data.tasks || []);
         setInterviews(ivRes.data.interviews || []);
         setAnalytics(analyticsRes.data.overview || null);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(getApiErrorMessage(error, "Failed to load your dashboard"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -75,7 +88,7 @@ function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, retryKey]);
 
   const active = apps.filter((a) => a.status !== "Rejected");
   const counts = useMemo(() => {
@@ -150,11 +163,19 @@ function Dashboard() {
     pipelineStatuses.reduce((n, s) => n + counts[s], 0) || 1;
 
   const handleToggleTask = async (task) => {
+    const nextCompleted = !task.completed;
     setTasks((cur) =>
-      cur.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t))
+      cur.map((t) => (t.id === task.id ? { ...t, completed: nextCompleted } : t))
     );
-    await updateTask(task.id, { completed: !task.completed });
-    refresh();
+    try {
+      await updateTask(task.id, { completed: nextCompleted });
+      refresh();
+    } catch (error) {
+      setTasks((cur) =>
+        cur.map((t) => (t.id === task.id ? { ...t, completed: task.completed } : t))
+      );
+      feedback.error(getApiErrorMessage(error, "Failed to update task"));
+    }
   };
 
   const firstName = user?.name ? user.name.split(" ")[0] : "there";
@@ -175,6 +196,13 @@ function Dashboard() {
         </button>
       </header>
 
+      {loadError ? (
+        <ErrorState
+          message={loadError}
+          onRetry={() => setRetryKey((key) => key + 1)}
+        />
+      ) : (
+        <>
       <section className="stat-strip">
         <div className="stat-cell">
           <div className="mono-label">Active applications</div>
@@ -270,7 +298,7 @@ function Dashboard() {
             <span className="mono-label">Next 7 days</span>
           </div>
           {loading ? (
-            <div style={{ padding: 16, color: "var(--muted)" }}>Loading…</div>
+            <LoadingState label="Loading your agenda…" compact />
           ) : agenda.length === 0 ? (
             <EmptyState
               title="Nothing pressing."
@@ -446,6 +474,8 @@ function Dashboard() {
           </section>
         </div>
       </div>
+        </>
+      )}
     </main>
   );
 }

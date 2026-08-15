@@ -27,17 +27,24 @@ import PriorityMark from "./PriorityMark";
 import CompanyMark from "./CompanyMark";
 import FilterSelect from "./FilterSelect";
 import TaskCheck from "./TaskCheck";
+import ErrorState from "./ErrorState";
+import LoadingState from "./LoadingState";
+import { useFeedback } from "../context/FeedbackContext";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const dangerInk = "oklch(var(--st-l) 0.12 22)";
 
 function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
   const { settings } = useSettings();
+  const feedback = useFeedback();
   const [app, setApp] = useState(null);
   const [notes, setNotes] = useState([]);
   const [interviews, setInterviews] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
   const [closing, setClosing] = useState(false);
   const [tab, setTab] = useState("overview");
 
@@ -65,6 +72,7 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
     const load = async () => {
       setLoading(true);
       setNotFound(false);
+      setLoadError("");
       try {
         const [appRes, notesRes, ivRes, tasksRes] = await Promise.all([
           getApplication(appId),
@@ -79,8 +87,11 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
         setTasks(
           (tasksRes.data.tasks || []).filter((t) => t.applicationId === appId)
         );
-      } catch {
-        if (!cancelled) setNotFound(true);
+      } catch (error) {
+        if (!cancelled) {
+          if (error?.response?.status === 404) setNotFound(true);
+          else setLoadError(getApiErrorMessage(error, "Failed to load application"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -89,7 +100,7 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
     return () => {
       cancelled = true;
     };
-  }, [appId, refreshKey]);
+  }, [appId, refreshKey, retryKey]);
 
   const reloadTasks = async () => {
     const res = await getTasks();
@@ -97,57 +108,103 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
   };
 
   const changeStatus = async (status) => {
-    const res = await updateApplication(appId, { status });
-    setApp(res.data.application);
-    refresh();
+    const previous = app;
+    setApp((current) => ({ ...current, status }));
+    try {
+      const res = await updateApplication(appId, { status });
+      setApp(res.data.application);
+      feedback.success(`Status changed to ${status}`);
+      refresh();
+    } catch (error) {
+      setApp(previous);
+      feedback.error(getApiErrorMessage(error, "Failed to update status"));
+    }
   };
 
   const handleToggleTask = async (task) => {
-    await updateTask(task.id, { completed: !task.completed });
-    await reloadTasks();
-    refresh();
+    const nextCompleted = !task.completed;
+    setTasks((current) =>
+      current.map((item) =>
+        item.id === task.id ? { ...item, completed: nextCompleted } : item
+      )
+    );
+    try {
+      await updateTask(task.id, { completed: nextCompleted });
+      refresh();
+    } catch (error) {
+      setTasks((current) =>
+        current.map((item) =>
+          item.id === task.id ? { ...item, completed: task.completed } : item
+        )
+      );
+      feedback.error(getApiErrorMessage(error, "Failed to update task"));
+    }
   };
 
   const handleAddNote = async (e) => {
     e.preventDefault();
     if (!noteDraft.trim()) return;
-    const res = await createNote(appId, { content: noteDraft.trim() });
-    setNotes((cur) => [res.data.note, ...cur]);
-    setNoteDraft("");
+    try {
+      const res = await createNote(appId, { content: noteDraft.trim() });
+      setNotes((cur) => [res.data.note, ...cur]);
+      setNoteDraft("");
+      feedback.success("Note saved");
+    } catch (error) {
+      feedback.error(getApiErrorMessage(error, "Failed to save note"));
+    }
   };
 
   const handleAddTask = async (e) => {
     e.preventDefault();
     if (!taskDraft.trim()) return;
-    await createTask({
-      title: taskDraft.trim(),
-      dueDate: taskDue || null,
-      applicationId: appId,
-    });
-    setTaskDraft("");
-    setTaskDue("");
-    await reloadTasks();
-    refresh();
+    try {
+      await createTask({
+        title: taskDraft.trim(),
+        dueDate: taskDue || null,
+        applicationId: appId,
+      });
+      setTaskDraft("");
+      setTaskDue("");
+      await reloadTasks();
+      feedback.success("Task added");
+      refresh();
+    } catch (error) {
+      feedback.error(getApiErrorMessage(error, "Failed to add task"));
+    }
   };
 
   const handleAddInterview = async (e) => {
     e.preventDefault();
     if (!iv.date) return;
-    await createInterview(appId, {
-      interviewDate: iv.date,
-      interviewType: iv.type.trim() || "Interview",
-      meetingLink: iv.link.trim() || null,
-      notes: iv.notes.trim() || null,
-    });
-    const res = await getApplicationInterviews(appId);
-    setInterviews(res.data.interviews || []);
-    setIv({ date: "", type: "", link: "", notes: "" });
-    setIvFormOpen(false);
+    try {
+      await createInterview(appId, {
+        interviewDate: iv.date,
+        interviewType: iv.type.trim() || "Interview",
+        meetingLink: iv.link.trim() || null,
+        notes: iv.notes.trim() || null,
+      });
+      const res = await getApplicationInterviews(appId);
+      setInterviews(res.data.interviews || []);
+      setIv({ date: "", type: "", link: "", notes: "" });
+      setIvFormOpen(false);
+      feedback.success("Interview scheduled");
+      refresh();
+    } catch (error) {
+      feedback.error(getApiErrorMessage(error, "Failed to schedule interview"));
+    }
   };
 
   const handleDeleteInterview = async (id) => {
-    await deleteInterview(id);
+    const previous = interviews;
     setInterviews((cur) => cur.filter((i) => i.id !== id));
+    try {
+      await deleteInterview(id);
+      feedback.success("Interview removed");
+      refresh();
+    } catch (error) {
+      setInterviews(previous);
+      feedback.error(getApiErrorMessage(error, "Failed to remove interview"));
+    }
   };
 
   const handleDelete = async () => {
@@ -156,10 +213,15 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
       !confirm("Delete this application? Linked tasks will be kept and unlinked.")
     )
       return;
-    await Promise.all(tasks.map((t) => updateTask(t.id, { applicationId: null })));
-    await deleteApplication(appId);
-    refresh();
-    close();
+    try {
+      await Promise.all(tasks.map((t) => updateTask(t.id, { applicationId: null })));
+      await deleteApplication(appId);
+      feedback.success("Application deleted");
+      refresh();
+      close();
+    } catch (error) {
+      feedback.error(getApiErrorMessage(error, "Failed to delete application"));
+    }
   };
 
   const companyName = app?.company?.name || "";
@@ -180,7 +242,15 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
       />
       <aside className={"drawer" + (closing ? " closing" : "")}>
         {loading ? (
-          <div style={{ padding: 24, color: "var(--muted)" }}>Loading…</div>
+          <LoadingState label="Loading application…" />
+        ) : loadError ? (
+          <div style={{ padding: 20 }}>
+            <ErrorState
+              message={loadError}
+              onRetry={() => setRetryKey((key) => key + 1)}
+              compact
+            />
+          </div>
         ) : notFound || !app ? (
           <div style={{ padding: 24 }}>
             <button className="icon-btn" onClick={close} aria-label="Close">

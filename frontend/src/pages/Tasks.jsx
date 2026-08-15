@@ -6,6 +6,10 @@ import { useUI } from "../context/UIContext";
 import { daysUntil, relDay } from "../utils/dates";
 import TaskCheck from "../components/TaskCheck";
 import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
+import LoadingState from "../components/LoadingState";
+import { useFeedback } from "../context/FeedbackContext";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const dangerInk = "oklch(var(--st-l) 0.12 22)";
 const TASK_TEMPLATES = [
@@ -17,28 +21,43 @@ const TASK_TEMPLATES = [
 
 function Tasks() {
   const { refreshKey, refresh, openApp } = useUI();
+  const feedback = useFeedback();
   const [tasks, setTasks] = useState([]);
   const [apps, setApps] = useState([]);
   const [draft, setDraft] = useState("");
   const [due, setDue] = useState("");
   const [linkId, setLinkId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const [tasksRes, appsRes] = await Promise.all([
-        getTasks(),
-        getApplications(),
-      ]);
-      if (cancelled) return;
-      setTasks(tasksRes.data.tasks || []);
-      setApps(appsRes.data.applications || []);
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [tasksRes, appsRes] = await Promise.all([
+          getTasks(),
+          getApplications(),
+        ]);
+        if (cancelled) return;
+        setTasks(tasksRes.data.tasks || []);
+        setApps(appsRes.data.applications || []);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(getApiErrorMessage(error, "Failed to load tasks"));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     load();
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, retryKey]);
 
   const open = tasks.filter((t) => !t.completed);
   const done = tasks.filter((t) => t.completed);
@@ -62,28 +81,60 @@ function Tasks() {
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!draft.trim()) return;
-    const res = await createTask({
-      title: draft.trim(),
-      dueDate: due || null,
-      applicationId: linkId ? Number(linkId) : null,
-    });
-    setTasks((cur) => [res.data.task, ...cur]);
-    setDraft("");
-    setDue("");
-    setLinkId("");
-    refresh();
+    setAdding(true);
+    try {
+      const res = await createTask({
+        title: draft.trim(),
+        dueDate: due || null,
+        applicationId: linkId ? Number(linkId) : null,
+      });
+      setTasks((cur) => [res.data.task, ...cur]);
+      setDraft("");
+      setDue("");
+      setLinkId("");
+      feedback.success("Task added");
+      refresh();
+    } catch (error) {
+      feedback.error(getApiErrorMessage(error, "Failed to add task"));
+    } finally {
+      setAdding(false);
+    }
   };
 
   const handleToggle = async (task) => {
-    const res = await updateTask(task.id, { completed: !task.completed });
-    setTasks((cur) => cur.map((t) => (t.id === task.id ? res.data.task : t)));
-    refresh();
+    const nextCompleted = !task.completed;
+    setTasks((cur) =>
+      cur.map((item) =>
+        item.id === task.id ? { ...item, completed: nextCompleted } : item
+      )
+    );
+    try {
+      const res = await updateTask(task.id, { completed: nextCompleted });
+      setTasks((cur) =>
+        cur.map((item) => (item.id === task.id ? res.data.task : item))
+      );
+      refresh();
+    } catch (error) {
+      setTasks((cur) =>
+        cur.map((item) =>
+          item.id === task.id ? { ...item, completed: task.completed } : item
+        )
+      );
+      feedback.error(getApiErrorMessage(error, "Failed to update task"));
+    }
   };
 
   const handleDelete = async (id) => {
-    await deleteTask(id);
+    const previous = tasks;
     setTasks((cur) => cur.filter((t) => t.id !== id));
-    refresh();
+    try {
+      await deleteTask(id);
+      feedback.success("Task deleted");
+      refresh();
+    } catch (error) {
+      setTasks(previous);
+      feedback.error(getApiErrorMessage(error, "Failed to delete task"));
+    }
   };
 
   return (
@@ -125,8 +176,12 @@ function Tasks() {
             </option>
           ))}
         </select>
-        <button className="btn btn-primary" type="submit" disabled={!draft.trim()}>
-          <Plus size={14} /> Add
+        <button
+          className="btn btn-primary"
+          type="submit"
+          disabled={!draft.trim() || adding}
+        >
+          <Plus size={14} /> {adding ? "Adding…" : "Add"}
         </button>
       </form>
 
@@ -143,6 +198,17 @@ function Tasks() {
         ))}
       </div>
 
+      {loadError ? (
+        <ErrorState
+          message={loadError}
+          onRetry={() => setRetryKey((key) => key + 1)}
+        />
+      ) : loading ? (
+        <div className="card">
+          <LoadingState label="Loading tasks…" />
+        </div>
+      ) : (
+        <>
       {groups.map(
         ([label, list, color]) =>
           list.length > 0 && (
@@ -214,6 +280,8 @@ function Tasks() {
             hint="Add follow-ups and prep work above."
           />
         </div>
+      )}
+        </>
       )}
     </main>
   );
