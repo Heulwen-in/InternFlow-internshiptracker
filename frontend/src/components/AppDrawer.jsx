@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ExternalLink,
   Pencil,
@@ -13,7 +13,12 @@ import {
   getApplication,
   updateApplication,
 } from "../api/applicationApi";
-import { createNote, getNotes } from "../api/noteApi";
+import {
+  createNote,
+  deleteNote,
+  getNotes,
+  updateNote,
+} from "../api/noteApi";
 import {
   createInterview,
   deleteInterview,
@@ -33,10 +38,14 @@ import { useFeedback } from "../context/FeedbackContext";
 import { getApiErrorMessage } from "../utils/apiError";
 
 const dangerInk = "oklch(var(--st-l) 0.12 22)";
+const NOTE_UNDO_MS = 6000;
 
 function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
   const { settings } = useSettings();
   const feedback = useFeedback();
+  const mountedRef = useRef(true);
+  const activeAppIdRef = useRef(appId);
+  const pendingNoteDeletesRef = useRef(new Map());
   const [app, setApp] = useState(null);
   const [notes, setNotes] = useState([]);
   const [interviews, setInterviews] = useState([]);
@@ -49,10 +58,24 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
   const [tab, setTab] = useState("overview");
 
   const [noteDraft, setNoteDraft] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [editNoteDraft, setEditNoteDraft] = useState("");
+  const [noteSavingId, setNoteSavingId] = useState(null);
   const [taskDraft, setTaskDraft] = useState("");
   const [taskDue, setTaskDue] = useState("");
   const [ivFormOpen, setIvFormOpen] = useState(false);
   const [iv, setIv] = useState({ date: "", type: "", link: "", notes: "" });
+
+  useEffect(() => {
+    activeAppIdRef.current = appId;
+  }, [appId]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const close = useCallback(() => {
     setClosing(true);
@@ -82,7 +105,11 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
         ]);
         if (cancelled) return;
         setApp(appRes.data.application);
-        setNotes(notesRes.data.notes || []);
+        setNotes(
+          (notesRes.data.notes || []).filter(
+            (note) => !pendingNoteDeletesRef.current.has(note.id)
+          )
+        );
         setInterviews(ivRes.data.interviews || []);
         setTasks(
           (tasksRes.data.tasks || []).filter((t) => t.applicationId === appId)
@@ -152,6 +179,96 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
     } catch (error) {
       feedback.error(getApiErrorMessage(error, "Failed to save note"));
     }
+  };
+
+  const startEditingNote = (note) => {
+    setEditingNoteId(note.id);
+    setEditNoteDraft(note.content);
+  };
+
+  const cancelEditingNote = () => {
+    setEditingNoteId(null);
+    setEditNoteDraft("");
+  };
+
+  const handleUpdateNote = async (note) => {
+    const content = editNoteDraft.trim();
+    if (!content || content === note.content) {
+      cancelEditingNote();
+      return;
+    }
+
+    setNoteSavingId(note.id);
+    try {
+      const res = await updateNote(note.id, { content });
+      setNotes((current) =>
+        current.map((item) => (item.id === note.id ? res.data.note : item))
+      );
+      cancelEditingNote();
+      feedback.success("Note updated");
+    } catch (error) {
+      feedback.error(getApiErrorMessage(error, "Failed to update note"));
+    } finally {
+      setNoteSavingId(null);
+    }
+  };
+
+  const restoreDeletedNote = (note) => {
+    const pending = pendingNoteDeletesRef.current.get(note.id);
+    if (!pending) return;
+    window.clearTimeout(pending.timer);
+    pendingNoteDeletesRef.current.delete(note.id);
+
+    if (mountedRef.current && activeAppIdRef.current === note.applicationId) {
+      setNotes((current) =>
+        current.some((item) => item.id === note.id)
+          ? current
+          : [...current, note].sort(
+              (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            )
+      );
+    }
+  };
+
+  const commitNoteDelete = async (note) => {
+    pendingNoteDeletesRef.current.delete(note.id);
+    try {
+      await deleteNote(note.id);
+    } catch (error) {
+      if (mountedRef.current && activeAppIdRef.current === note.applicationId) {
+        setNotes((current) =>
+          current.some((item) => item.id === note.id)
+            ? current
+            : [...current, note].sort(
+                (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+              )
+        );
+      }
+      feedback.error(getApiErrorMessage(error, "Failed to delete note"));
+    }
+  };
+
+  const handleDeleteNote = (note) => {
+    if (pendingNoteDeletesRef.current.has(note.id)) return;
+    if (editingNoteId === note.id) cancelEditingNote();
+
+    setNotes((current) => current.filter((item) => item.id !== note.id));
+    const timer = window.setTimeout(
+      () => commitNoteDelete(note),
+      NOTE_UNDO_MS
+    );
+    pendingNoteDeletesRef.current.set(note.id, { timer });
+
+    feedback.addToast({
+      type: "info",
+      title: "Note deleted",
+      message: "The note will be permanently deleted shortly.",
+      duration: NOTE_UNDO_MS,
+      action: {
+        label: "Undo",
+        onClick: () => restoreDeletedNote(note),
+      },
+    });
   };
 
   const handleAddTask = async (e) => {
@@ -630,10 +747,79 @@ function AppDrawer({ appId, refreshKey, onClose, onEdit, refresh }) {
                   </form>
                   {notes.map((n) => (
                     <div key={n.id} className="note-block">
-                      <p style={{ fontSize: 13.5, lineHeight: 1.6 }}>{n.content}</p>
-                      <div className="mono-label" style={{ fontSize: 10, marginTop: 8 }}>
-                        {fmtDateFull(n.createdAt)}
-                      </div>
+                      {editingNoteId === n.id ? (
+                        <>
+                          <textarea
+                            className="textarea note-edit-area"
+                            value={editNoteDraft}
+                            onChange={(e) => setEditNoteDraft(e.target.value)}
+                            maxLength={10000}
+                            autoFocus
+                            aria-label="Edit note"
+                          />
+                          <div className="note-edit-actions">
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={cancelEditingNote}
+                              disabled={noteSavingId === n.id}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              onClick={() => handleUpdateNote(n)}
+                              disabled={
+                                noteSavingId === n.id || !editNoteDraft.trim()
+                              }
+                            >
+                              {noteSavingId === n.id ? "Saving…" : "Save changes"}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="note-block-head">
+                            <div
+                              className="mono-label"
+                              style={{ fontSize: 10 }}
+                            >
+                              {fmtDateFull(n.createdAt)}
+                            </div>
+                            <div className="note-block-actions">
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                style={{ width: 28, height: 28 }}
+                                onClick={() => startEditingNote(n)}
+                                aria-label="Edit note"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                style={{ width: 28, height: 28, color: dangerInk }}
+                                onClick={() => handleDeleteNote(n)}
+                                aria-label="Delete note"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                          <p
+                            style={{
+                              fontSize: 13.5,
+                              lineHeight: 1.6,
+                              whiteSpace: "pre-wrap",
+                              marginTop: 6,
+                            }}
+                          >
+                            {n.content}
+                          </p>
+                        </>
+                      )}
                     </div>
                   ))}
                   {notes.length === 0 && (

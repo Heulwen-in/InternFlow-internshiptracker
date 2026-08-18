@@ -819,6 +819,42 @@
   background: var(--bg);
 }
 
+.note-block-head,
+.note-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.note-block-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.note-block:hover .note-block-actions,
+.note-block:focus-within .note-block-actions {
+  opacity: 1;
+}
+
+.note-edit-actions {
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.note-edit-area {
+  min-height: 96px;
+  resize: vertical;
+}
+
+@media (hover: none) {
+  .note-block-actions {
+    opacity: 1;
+  }
+}
+
 .hist-item {
   display: flex;
   gap: 12px;

@@ -21,6 +21,18 @@ function ToastViewport({ toasts, onDismiss }) {
             <div className="toast-copy">
               {toast.title && <strong>{toast.title}</strong>}
               <span>{toast.message}</span>
+              {toast.action && (
+                <button
+                  type="button"
+                  className="toast-action"
+                  onClick={() => {
+                    toast.action.onClick();
+                    onDismiss(toast.id);
+                  }}
+                >
+                  {toast.action.label}
+                </button>
+              )}
             </div>
             <button
               type="button"

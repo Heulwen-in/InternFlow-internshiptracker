@@ -18,11 +18,11 @@ export function FeedbackProvider({ children }) {
   }, []);
 
   const addToast = useCallback(
-    ({ type = "info", title, message, duration = 4500 }) => {
+    ({ type = "info", title, message, action, duration = 4500 }) => {
       const id = ++nextToastId;
       setToasts((current) => [
         ...current.slice(-3),
-        { id, type, title, message },
+        { id, type, title, message, action },
       ]);
 
       if (duration > 0) {

@@ -763,6 +763,23 @@ table.apps tbody tr:last-child td {
   line-height: 1.4;
 }
 
+.toast-action {
+  justify-self: start;
+  margin-top: 5px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.toast-action:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
 .toast-close {
   width: 28px;
   height: 28px;

@@ -55,6 +55,43 @@ const createNote = async (req, res) => {
   }
 };
 
+const updateNote = async (req, res) => {
+  try {
+    const content =
+      typeof req.body?.content === "string" ? req.body.content.trim() : "";
+
+    if (!content) {
+      return res.status(400).json({ message: "Note content is required" });
+    }
+    if (content.length > 10000) {
+      return res
+        .status(400)
+        .json({ message: "Note content must be 10,000 characters or fewer" });
+    }
+
+    const note = await prisma.note.findFirst({
+      where: {
+        id: Number(req.params.id),
+        application: { userId: req.user.id },
+      },
+    });
+
+    if (!note) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    const updatedNote = await prisma.note.update({
+      where: { id: note.id },
+      data: { content },
+    });
+
+    res.json({ note: updatedNote });
+  } catch (error) {
+    console.error("[notes.updateNote]", error);
+    res.status(500).json({ message: "Failed to update note" });
+  }
+};
+
 const deleteNote = async (req, res) => {
   try {
     const note = await prisma.note.findFirst({
@@ -77,4 +114,4 @@ const deleteNote = async (req, res) => {
   }
 };
 
-module.exports = { getNotes, createNote, deleteNote };
+module.exports = { getNotes, createNote, updateNote, deleteNote };

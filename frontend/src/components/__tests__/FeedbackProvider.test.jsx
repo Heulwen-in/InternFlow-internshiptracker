@@ -12,6 +12,24 @@ function Trigger() {
   );
 }
 
+function UndoTrigger({ onUndo }) {
+  const feedback = useFeedback();
+  return (
+    <button
+      onClick={() =>
+        feedback.addToast({
+          type: "info",
+          title: "Note deleted",
+          message: "The note will be deleted shortly.",
+          action: { label: "Undo", onClick: onUndo },
+        })
+      }
+    >
+      Delete note
+    </button>
+  );
+}
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
@@ -43,5 +61,20 @@ describe("FeedbackProvider", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show toast" }));
     fireEvent.click(screen.getByRole("button", { name: "Dismiss notification" }));
     expect(screen.queryByText("Application saved")).not.toBeInTheDocument();
+  });
+
+  test("runs an action and dismisses its toast", () => {
+    const onUndo = vi.fn();
+    render(
+      <FeedbackProvider>
+        <UndoTrigger onUndo={onUndo} />
+      </FeedbackProvider>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    expect(onUndo).toHaveBeenCalledOnce();
+    expect(screen.queryByText("Note deleted")).not.toBeInTheDocument();
   });
 });

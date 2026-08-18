@@ -122,6 +122,22 @@ describe("Note and Interview ownership via application", () => {
     expect(res.status).toBe(404);
   });
 
+  test("PATCH /api/notes/:id → 404 for another user, note unchanged", async () => {
+    const note = await prisma.note.create({
+      data: { applicationId: appA.id, content: "Private note" },
+    });
+
+    const res = await request(app)
+      .patch(`/api/notes/${note.id}`)
+      .set("Authorization", `Bearer ${tokenB}`)
+      .send({ content: "Changed by another user" });
+
+    expect(res.status).toBe(404);
+    await expect(
+      prisma.note.findUnique({ where: { id: note.id } })
+    ).resolves.toMatchObject({ content: "Private note" });
+  });
+
   test("DELETE /api/interviews/:id → 404 for another user", async () => {
     const interview = await prisma.interview.create({
       data: { applicationId: appA.id, interviewDate: new Date() },
