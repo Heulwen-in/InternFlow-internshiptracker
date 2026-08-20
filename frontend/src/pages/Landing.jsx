@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Moon, Sun } from "lucide-react";
+import { ArrowRight, GitFork, Moon, Sun } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import { useTheme } from "../context/ThemeContext";
 import StatusBadge from "../components/StatusBadge";
@@ -26,42 +27,62 @@ function Landing() {
   const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [navScrolled, setNavScrolled] = useState(() => window.scrollY > 12);
+  const primaryDestination = isAuthenticated ? "/dashboard" : "/register";
+  const primaryLabel = isAuthenticated ? "Open dashboard" : "Start tracking";
+  const currentYear = new Date().getFullYear();
+
+  useEffect(() => {
+    const updateNav = () => setNavScrolled(window.scrollY > 12);
+    window.addEventListener("scroll", updateNav, { passive: true });
+    return () => window.removeEventListener("scroll", updateNav);
+  }, []);
 
   return (
-    <div className="landing">
-      <header className="landing-nav">
-        <span className="wordmark">
-          Intern<b>Flow</b>
-        </span>
-        <div className="landing-nav-actions">
-          <button
-            className="icon-btn"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            type="button"
-          >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-          {isAuthenticated ? (
+    <div className="landing" id="top">
+      <header
+        className={`landing-nav-shell${navScrolled ? " scrolled" : ""}`}
+      >
+        <div className="landing-nav">
+          <a className="wordmark" href="#top" aria-label="InternFlow home">
+            Intern<b>Flow</b>
+          </a>
+          <nav className="landing-links" aria-label="Landing page">
+            <a href="#features">Features</a>
+          </nav>
+          <div className="landing-nav-actions">
             <button
-              className="btn btn-primary"
-              onClick={() => navigate("/dashboard")}
+              className="icon-btn"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              type="button"
             >
-              Open dashboard
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-          ) : (
-            <>
-              <button className="btn btn-ghost" onClick={() => navigate("/login")}>
-                Sign in
-              </button>
+            {isAuthenticated ? (
               <button
                 className="btn btn-primary"
-                onClick={() => navigate("/register")}
+                onClick={() => navigate("/dashboard")}
               >
-                Get started
+                Open dashboard
               </button>
-            </>
-          )}
+            ) : (
+              <>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => navigate("/login")}
+                >
+                  Sign in
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => navigate("/register")}
+                >
+                  Get started
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -78,16 +99,18 @@ function Landing() {
           <div className="landing-ctas">
             <button
               className="btn btn-primary btn-lg"
-              onClick={() => navigate("/register")}
+              onClick={() => navigate(primaryDestination)}
             >
-              Start tracking <ArrowRight size={15} />
+              {primaryLabel} <ArrowRight size={15} />
             </button>
-            <button
-              className="btn btn-ghost btn-lg"
-              onClick={() => navigate("/login")}
-            >
-              I have an account
-            </button>
+            {!isAuthenticated && (
+              <button
+                className="btn btn-ghost btn-lg"
+                onClick={() => navigate("/login")}
+              >
+                I have an account
+              </button>
+            )}
           </div>
         </div>
 
@@ -131,7 +154,7 @@ function Landing() {
         </div>
       </section>
 
-      <section className="landing-feats">
+      <section className="landing-feats" id="features">
         {FEATURES.map((f) => (
           <div className="feat" key={f.kicker}>
             <span className="mono-label">{f.kicker}</span>
@@ -140,6 +163,64 @@ function Landing() {
           </div>
         ))}
       </section>
+
+      <section className="landing-final-cta" aria-labelledby="landing-cta-title">
+        <div>
+          <span className="mono-label">Your next move, organized</span>
+          <h2 id="landing-cta-title">
+            Spend less time managing the search—and more time moving it forward.
+          </h2>
+          <p>
+            Keep every application, deadline, interview, and follow-up in one
+            focused workspace.
+          </p>
+        </div>
+        <button
+          className="btn btn-primary btn-lg"
+          onClick={() => navigate(primaryDestination)}
+        >
+          {primaryLabel} <ArrowRight size={15} />
+        </button>
+      </section>
+
+      <footer className="landing-footer">
+        <div className="landing-footer-inner">
+          <div className="landing-footer-brand">
+            <a className="wordmark" href="#top" aria-label="InternFlow home">
+              Intern<b>Flow</b>
+            </a>
+            <p>
+              A focused internship and job tracker for applications, interviews,
+              tasks, and follow-ups.
+            </p>
+          </div>
+
+          <div className="landing-footer-links">
+            <div>
+              <span className="mono-label">Product</span>
+              <a href="#features">Features</a>
+            </div>
+            <div>
+              <span className="mono-label">Legal</span>
+              <span title="Privacy policy coming soon">Privacy</span>
+              <span title="Terms of service coming soon">Terms</span>
+            </div>
+            <div>
+              <span className="mono-label">Project</span>
+              <a
+                href="https://github.com/Heulwen-in/InternFlow-internshiptracker"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <GitFork size={14} /> GitHub repository
+              </a>
+            </div>
+          </div>
+        </div>
+        <div className="landing-footer-bottom">
+          © {currentYear} InternFlow. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 }
