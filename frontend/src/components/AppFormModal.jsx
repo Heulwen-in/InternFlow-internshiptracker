@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import {
   createApplication,
   getApplication,
@@ -16,6 +16,7 @@ import ErrorState from "./ErrorState";
 import LoadingState from "./LoadingState";
 import { useFeedback } from "../context/FeedbackContext";
 import { getApiErrorMessage } from "../utils/apiError";
+import { parseJobDescription } from "../api/aiApi";
 
 const EMPTY = {
   company: "",
@@ -31,6 +32,14 @@ const EMPTY = {
 };
 
 const dangerInk = "oklch(var(--st-l) 0.12 22)";
+const PARSED_FIELD_LABELS = {
+  company: "Company",
+  roleTitle: "Role title",
+  industry: "Industry",
+  location: "Location",
+  workType: "Work type",
+  deadline: "Deadline",
+};
 
 function AppFormModal({ mode, onClose, refresh, openApp }) {
   const feedback = useFeedback();
@@ -45,6 +54,11 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
   const [serverError, setServerError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
+  const [parserOpen, setParserOpen] = useState(false);
+  const [jobDescription, setJobDescription] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [parseError, setParseError] = useState("");
+  const [parsedSuggestions, setParsedSuggestions] = useState(null);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -117,6 +131,57 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
 
     const res = await createCompany({ name, industry: industry || undefined });
     return res.data.company.id;
+  };
+
+  const handleParse = async () => {
+    if (!jobDescription.trim()) {
+      setParseError("Paste a job description first.");
+      return;
+    }
+
+    setParsing(true);
+    setParseError("");
+    setParsedSuggestions(null);
+    try {
+      const response = await parseJobDescription(jobDescription.trim());
+      setParsedSuggestions(response.data.parsed);
+    } catch (error) {
+      setParseError(getApiErrorMessage(error, "Failed to parse job description"));
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const handleApplySuggestions = () => {
+    const suggestions = parsedSuggestions || {};
+    const next = { ...form };
+    let appliedCount = 0;
+
+    ["company", "roleTitle", "industry", "location", "deadline"].forEach(
+      (key) => {
+        if (!form[key]?.trim() && suggestions[key]) {
+          next[key] = suggestions[key];
+          appliedCount += 1;
+        }
+      }
+    );
+    if (suggestions.workType && form.workType === EMPTY.workType) {
+      next.workType = suggestions.workType;
+      appliedCount += 1;
+    }
+    setForm(next);
+
+    if (appliedCount > 0) {
+      feedback.success(
+        `${appliedCount} suggestion${appliedCount === 1 ? "" : "s"} applied`,
+        "Job details added"
+      );
+    } else {
+      feedback.info(
+        "Your existing values were kept. Clear a field to apply its suggestion.",
+        "No fields changed"
+      );
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -215,6 +280,88 @@ function AppFormModal({ mode, onClose, refresh, openApp }) {
                   {serverError}
                 </p>
               )}
+              <section className={`job-parser${parserOpen ? " open" : ""}`}>
+                <button
+                  type="button"
+                  className="job-parser-toggle"
+                  onClick={() => setParserOpen((open) => !open)}
+                  aria-expanded={parserOpen}
+                >
+                  <span>
+                    <strong>Parse job description</strong>
+                    <small>Fill application details with your local Ollama model</small>
+                  </span>
+                  <ChevronDown size={17} aria-hidden="true" />
+                </button>
+                {parserOpen && (
+                  <div className="job-parser-body">
+                    <label className="field">
+                      <span className="field-label">Job description</span>
+                      <textarea
+                        className="textarea job-parser-input"
+                        value={jobDescription}
+                        onChange={(event) => {
+                          setJobDescription(event.target.value);
+                          setParseError("");
+                          setParsedSuggestions(null);
+                        }}
+                        maxLength={30000}
+                        placeholder="Paste the complete job description here…"
+                        disabled={parsing}
+                      />
+                    </label>
+                    <div className="job-parser-actions">
+                      <span>{jobDescription.length.toLocaleString()} / 30,000</span>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={handleParse}
+                        disabled={parsing || !jobDescription.trim()}
+                      >
+                        {parsing ? "Parsing…" : "Parse description"}
+                      </button>
+                    </div>
+                    {parsing && (
+                      <LoadingState label="Ollama is reading the job…" compact />
+                    )}
+                    {parseError && (
+                      <ErrorState
+                        title="Couldn’t parse this description"
+                        message={parseError}
+                        onRetry={handleParse}
+                        compact
+                      />
+                    )}
+                    {parsedSuggestions && !parsing && (
+                      <div className="job-parser-results">
+                        <div className="job-parser-results-head">
+                          <div>
+                            <strong>Parsed suggestions</strong>
+                            <span>Existing details will not be overwritten.</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={handleApplySuggestions}
+                          >
+                            Apply suggestions
+                          </button>
+                        </div>
+                        <dl>
+                          {Object.entries(PARSED_FIELD_LABELS).map(
+                            ([key, label]) => (
+                              <div key={key}>
+                                <dt>{label}</dt>
+                                <dd>{parsedSuggestions[key] || "Not found"}</dd>
+                              </div>
+                            )
+                          )}
+                        </dl>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
               <div className="form-grid">
                 <div className="field">
                   <label className="field-label">Company *</label>

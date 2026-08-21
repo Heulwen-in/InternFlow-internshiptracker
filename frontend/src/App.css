@@ -954,12 +954,128 @@
   grid-column: span 2;
 }
 
+.job-parser {
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.job-parser-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.job-parser-toggle span {
+  display: grid;
+  gap: 2px;
+}
+
+.job-parser-toggle strong {
+  font-size: 13px;
+}
+
+.job-parser-toggle small,
+.job-parser-actions,
+.job-parser-results-head span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.job-parser-toggle svg {
+  flex: 0 0 auto;
+  transition: transform 0.2s ease;
+}
+
+.job-parser.open .job-parser-toggle svg {
+  transform: rotate(180deg);
+}
+
+.job-parser-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+}
+
+.job-parser-body > .field {
+  padding-top: 14px;
+}
+
+.job-parser-input {
+  min-height: 132px;
+  resize: vertical;
+}
+
+.job-parser-actions,
+.job-parser-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.job-parser-results {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.job-parser-results-head > div {
+  display: grid;
+  gap: 2px;
+}
+
+.job-parser-results dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 14px;
+}
+
+.job-parser-results dl div {
+  min-width: 0;
+}
+
+.job-parser-results dt {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.job-parser-results dd {
+  margin: 2px 0 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 560px) {
   .form-grid {
     grid-template-columns: 1fr;
   }
   .form-grid .span2 {
     grid-column: span 1;
+  }
+  .job-parser-results-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .job-parser-results dl {
+    grid-template-columns: 1fr;
   }
 }
 
