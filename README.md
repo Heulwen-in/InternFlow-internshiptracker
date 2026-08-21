@@ -14,6 +14,7 @@ A full-stack application for students and graduates to track internship and job 
 ### Application management
 - Company CRUD with find-or-create when adding applications
 - Application CRUD (role, status, priority, work type, deadlines, and more)
+- Local AI-assisted job-description parsing with Ollama
 - Application detail drawer (notes, interviews, tasks, status history)
 - Modal-based create/edit form (URL-addressable via search params)
 - Search, filters, and table/card view toggle on the applications page
@@ -48,6 +49,7 @@ A full-stack application for students and graduates to track internship and job 
 ### Prerequisites
 - Node.js 18+
 - Docker (for PostgreSQL)
+- [Ollama](https://ollama.com/) (optional, for local job-description parsing)
 
 ### 1. Database
 
@@ -75,6 +77,25 @@ npm install
 npm run dev              # http://localhost:5173
 ```
 
+### 4. Local Ollama parser (optional)
+
+The parser runs entirely through your own Ollama installation and does not
+require a hosted LLM API key.
+
+```bash
+ollama pull qwen2.5:3b
+ollama serve
+```
+
+Keep Ollama running, then open the add/edit application modal and expand
+**Parse job description**. The backend defaults to
+`http://127.0.0.1:11434` and the `qwen2.5:3b` model.
+
+If the backend runs in Docker while Ollama runs on the host, set
+`OLLAMA_BASE_URL=http://host.docker.internal:11434`. The configured model must
+already be installed locally. You can choose another installed model with
+`OLLAMA_MODEL`.
+
 ### Environment variables
 
 **Root** (`.env`) — used by Docker Compose:
@@ -82,6 +103,7 @@ npm run dev              # http://localhost:5173
 
 **Backend** (`backend/.env`):
 - `DATABASE_URL`, `JWT_SECRET`, `PORT`, `CORS_ORIGIN`, `APP_URL`
+- `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT_MS` (optional local AI parser)
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`
 
 **Frontend** (`frontend/.env`):
@@ -134,6 +156,12 @@ Base URL: `http://localhost:5000/api`
 |---|---|
 | GET, POST | `/applications` |
 | GET, PUT, DELETE | `/applications/:id` |
+
+### Local AI
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/ai/parse-job` | Parse pasted job-description text with local Ollama |
 
 ### Notes, tasks, interviews
 
