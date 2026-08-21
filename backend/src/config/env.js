@@ -44,6 +44,14 @@ module.exports = {
   jwtSecret,
   corsOrigin,
   appUrl: process.env.APP_URL || "http://localhost:5173",
+  ollama: {
+    baseUrl: (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(
+      /\/+$/,
+      ""
+    ),
+    model: process.env.OLLAMA_MODEL || "qwen2.5:3b",
+    timeoutMs: Number(process.env.OLLAMA_TIMEOUT_MS) || 30000,
+  },
   mail: {
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,

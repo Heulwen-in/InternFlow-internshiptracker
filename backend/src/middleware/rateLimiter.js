@@ -16,4 +16,14 @@ const strictLimiter = rateLimit({
   message: { message: "Too many attempts, please try again later." },
 });
 
-module.exports = { authLimiter, strictLimiter };
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many AI parsing requests, please try again later.",
+  },
+});
+
+module.exports = { authLimiter, strictLimiter, aiLimiter };

@@ -9,6 +9,7 @@ const interviewRoutes = require("./routes/interviewRoutes");
 const reminderRoutes = require("./routes/reminderRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const dataRoutes = require("./routes/dataRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const env = require("./config/env");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api", interviewRoutes);
 app.use("/api", reminderRoutes);
 app.use("/api", analyticsRoutes);
 app.use("/api", dataRoutes);
+app.use("/api/ai", aiRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
